@@ -506,29 +506,33 @@ def is_installed(package):
     return spec is not None
 
 
-try:
-    if is_installed('rembg')==False:
-        import subprocess
+# try:
+#     if is_installed('rembg')==False:
+#         import subprocess
 
-        # 安装
-        print('#pip install rembg[gpu]')
+#         # 安装
+#         print('#pip install rembg[gpu]')
 
-        result = subprocess.run([sys.executable, '-s', '-m', 'pip', 'install', 'rembg[gpu]'], capture_output=True, text=True)
+#         result = subprocess.run([sys.executable, '-s', '-m', 'pip', 'install', 'rembg[gpu]'], capture_output=True, text=True)
 
-        #检查命令执行结果
-        if result.returncode == 0:
-            print("#install success")
-            from rembg import new_session, remove
-            _available=True
-        else:
-            print("#install error")
+#         #检查命令执行结果
+#         if result.returncode == 0:
+#             print("#install success")
+#             from rembg import new_session, remove
+#             _available=True
+#         else:
+#             print("#install error")
         
-    else:
-        from rembg import new_session, remove
-        _available=True
+#     else:
+#         from rembg import new_session, remove
+#         _available=True
 
-except:
-    _available=False
+# except:
+#     _available=False
+
+new_session = None
+remove = None
+_available = True
 
 
 def run_briarmbg(images=[]):
@@ -536,12 +540,15 @@ def run_briarmbg(images=[]):
     m=os.path.join(mroot,'briarmbg.pth')
     if os.path.exists(m)==False:
         # 下载
-        m1=hf_hub_download("briaai/RMBG-1.4",
-                       local_dir=mroot,
-                       filename='model.pth',
-                       local_dir_use_symlinks=False,
-                       endpoint='https://hf-mirror.com')
-        os.rename(m1, m)
+        if os.path.exists("/stable-diffusion-cache/models/RMBG-1.4"):
+            m = "/stable-diffusion-cache/models/RMBG-1.4/model.pth"
+        else:
+            m1=hf_hub_download("briaai/RMBG-1.4",
+                        local_dir=mroot,
+                        filename='model.pth',
+                        local_dir_use_symlinks=False,
+                        endpoint='https://hf-mirror.com')
+            os.rename(m1, m)
     
     net=BriaRMBG()
     if torch.cuda.is_available():
@@ -598,6 +605,9 @@ def run_briarmbg(images=[]):
 def run_rembg(model_name= "unet",images=[],callback=None):
     # model_name = "unet" # "isnet-general-use"
     # print('#run_rembg',model_name)
+    global new_session, remove
+    if new_session is None:
+        from rembg import new_session, remove
     rembg_session = new_session(model_name)
     masks=[]
     rgba_images=[]
