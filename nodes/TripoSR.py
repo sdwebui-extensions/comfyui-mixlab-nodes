@@ -8,6 +8,7 @@ import torch
 from folder_paths import get_folder_paths, get_full_path, get_save_image_path, get_output_directory,models_dir
 from comfy.model_management import get_torch_device
 from .tsr.system import TSR
+import os
 
 import comfy.utils
 
@@ -63,6 +64,8 @@ class LoadTripoSRModel:
         if not self.initialized_model:
             # triposr_model_path
             print("#Loading TripoSR model",triposr_model_path)
+            if not os.path.exists(triposr_model_path) and os.path.exists('/stable-diffusion-cache/serverless-ui/models/Stable-diffusion'):
+                triposr_model_path = '/stable-diffusion-cache/serverless-ui/models/Stable-diffusion/triposr_model.ckpt'
             self.initialized_model = TSR.from_pretrained_custom(
                 weight_path=triposr_model_path,
                 config_path=path.join(path.dirname(__file__), "tsr/config.yaml")

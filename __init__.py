@@ -11,6 +11,7 @@ import logging
 import base64,io,re
 from PIL import Image
 from comfy.cli_args import args
+import time
 python = sys.executable
 
 #修复 sys.stdout.isatty()  object has no attribute 'isatty'
@@ -24,15 +25,22 @@ llama_port=None
 llama_model=""
 llama_chat_format=""
 
+tic = time.time()
 try:
     from .nodes.ChatGPT import get_llama_models,get_llama_model_path,llama_cpp_client
     llama_cpp_client("")
 
 except:
     print("##nodes.ChatGPT ImportError")
+toc = time.time()
+print(f'import .nodes.ChatGPT: {toc - tic}')
+tic = time.time()
 
 
 from .nodes.RembgNode import get_rembg_models,U2NET_HOME,run_briarmbg,run_rembg
+toc = time.time()
+print(f'import .nodes.RembgNode: {toc - tic}')
+tic = time.time()
 
 from server import PromptServer
 
@@ -75,6 +83,9 @@ except ImportError:
     print("pip install -r requirements.txt")
     is_installed('pyOpenSSL')
     sys.exit()
+toc = time.time()
+print(f'import OpenSSL: {toc - tic}')
+tic = time.time()
 
 try:
     import watchdog
@@ -85,6 +96,9 @@ except ImportError:
     print("pip install -r requirements.txt")
     is_installed('watchdog')
     sys.exit()
+toc = time.time()
+print(f'import watchdog: {toc - tic}')
+tic = time.time()
 
 
 
@@ -97,6 +111,9 @@ def install_openai():
         pip.main(['install', 'openai'])
 
 install_openai()
+toc = time.time()
+print(f'import openai: {toc - tic}')
+tic = time.time()
 
 
 current_path = os.path.abspath(os.path.dirname(__file__))
@@ -842,15 +859,36 @@ def re_start(request):
 
 # 导入节点
 from .nodes.PromptNode import GLIGENTextBoxApply_Advanced,EmbeddingPrompt,RandomPrompt,PromptSlide,PromptSimplification,PromptImage,JoinWithDelimiter
+toc = time.time()
+print(f'import .nodes.PromptNode: {toc - tic}')
+tic = time.time()
 from .nodes.ImageNode import ImageListToBatch_,ComparingTwoFrames,LoadImages_,CompositeImages,GridDisplayAndSave,GridInput,ImagesPrompt,SaveImageAndMetadata,SaveImageToLocal,SplitImage,GridOutput,GetImageSize_,MirroredImage,ImageColorTransfer,NoiseImage,TransparentImage,GradientImage,LoadImagesFromPath,LoadImagesFromURL,ResizeImage,TextImage,SvgImage,Image3D,ShowLayer,NewLayer,MergeLayers,CenterImage,AreaToMask,SmoothMask,SplitLongMask,ImageCropByAlpha,EnhanceImage,FaceToMask
+toc = time.time()
+print(f'import .nodes.ImageNode: {toc - tic}')
+tic = time.time()
 # from .nodes.Vae import VAELoader,VAEDecode
 from .nodes.ScreenShareNode import ScreenShareNode,FloatingVideo
+toc = time.time()
+print(f'import .nodes.ScreenShareNode: {toc - tic}')
+tic = time.time()
 
 from .nodes.Audio import AudioPlayNode,SpeechRecognition,SpeechSynthesis
+toc = time.time()
+print(f'import .nodes.Audio: {toc - tic}')
+tic = time.time()
 from .nodes.Utils import IncrementingListNode,ListSplit,CreateLoraNames,CreateSampler_names,CreateCkptNames,CreateSeedNode,TESTNODE_,TESTNODE_TOKEN,AppInfo,IntNumber,FloatSlider,TextInput,ColorInput,FontInput,TextToNumber,DynamicDelayProcessor,LimitNumber,SwitchByIndex,MultiplicationNode
+toc = time.time()
+print(f'import .nodes.Utils: {toc - tic}')
+tic = time.time()
 from .nodes.Mask import PreviewMask_,MaskListReplace,MaskListMerge,OutlineMask,FeatheredMask
+toc = time.time()
+print(f'import .nodes.Mask: {toc - tic}')
+tic = time.time()
 
 from .nodes.Style import ApplyVisualStylePrompting,StyleAlignedReferenceSampler,StyleAlignedBatchAlign,StyleAlignedSampleReferenceLatents
+toc = time.time()
+print(f'import .nodes.Style: {toc - tic}')
+tic = time.time()
 
 
 
@@ -1029,6 +1067,9 @@ try:
 
 except Exception as e:
     logging.info('ChatGPT.available False')
+toc = time.time()
+print(f'import .nodes.ChatGPT: {toc - tic}')
+tic = time.time()
 
 
 try:
@@ -1039,6 +1080,10 @@ try:
 except Exception as e:
     logging.info('edit_mask.available False')
 
+toc = time.time()
+print(f'import .nodes.edit_mask: {toc - tic}')
+tic = time.time()
+
 try:
     from .nodes.Lama import LaMaInpainting
     logging.info('LaMaInpainting.available {}'.format(LaMaInpainting.available))
@@ -1047,6 +1092,10 @@ try:
 except Exception as e:
     logging.info('LaMaInpainting.available False')
 
+toc = time.time()
+print(f'import .nodes.Lama: {toc - tic}')
+tic = time.time()
+
 try:
     from .nodes.ClipInterrogator import ClipInterrogator
     logging.info('ClipInterrogator.available {}'.format(ClipInterrogator.available))
@@ -1054,6 +1103,10 @@ try:
         NODE_CLASS_MAPPINGS['ClipInterrogator']=ClipInterrogator
 except Exception as e:
     logging.info('ClipInterrogator.available False')
+
+toc = time.time()
+print(f'import .nodes.ClipInterrogator: {toc - tic}')
+tic = time.time()
 
 try:
     from .nodes.TextGenerateNode import PromptGenerate,ChinesePrompt
@@ -1066,6 +1119,10 @@ try:
 except Exception as e:
     logging.info('TextGenerateNode.available False')
 
+toc = time.time()
+print(f'import .nodes.TextGenerateNode: {toc - tic}')
+tic = time.time()
+
 try:
     from .nodes.RembgNode import RembgNode_
     logging.info('RembgNode_.available {}'.format(RembgNode_.available))
@@ -1073,6 +1130,10 @@ try:
         NODE_CLASS_MAPPINGS['RembgNode_Mix']=RembgNode_
 except Exception as e:
     logging.info('RembgNode_.available False' )
+
+toc = time.time()
+print(f'import .nodes.RembgNode: {toc - tic}')
+tic = time.time()
 
 
 try:
@@ -1108,6 +1169,10 @@ try:
 except:
     logging.info('Video.available False')
 
+toc = time.time()
+print(f'import .nodes.Video: {toc - tic}')
+tic = time.time()
+
 
 try:
     from .nodes.TripoSR import LoadTripoSRModel,TripoSRSampler,SaveTripoSRMesh
@@ -1125,6 +1190,10 @@ try:
 
 except Exception as e:
     logging.info('TripoSR.available False' )
+
+toc = time.time()
+print(f'import .nodes.TripoSR: {toc - tic}')
+tic = time.time()
 
 
 
