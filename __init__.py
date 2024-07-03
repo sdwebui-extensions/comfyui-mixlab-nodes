@@ -835,14 +835,18 @@ async def start_local_llm(data):
 @routes.post('/mixlab/start_llama')
 async def my_hander_method(request):
     data =await request.json()
+    if not args.start_llama:
+        result= {"port":None,"model":"","llama_cpp_error":True}
+        print('start_local_llm error')
+        return web.json_response(result)
     # print(data)
     if llama_port and llama_model and llama_chat_format:
         return web.json_response({"port":llama_port,"model":llama_model,"chat_format":llama_chat_format} )
     try:
         result=await start_local_llm(data)
-    except:
+    except Exception as e:
         result= {"port":None,"model":"","llama_cpp_error":True}
-        print('start_local_llm error')
+        print(f'start_local_llm error {e}')
 
     return web.json_response(result)
 
