@@ -21,17 +21,24 @@ class DINOSingleImageTokenizer(BaseModule):
     cfg: Config
 
     def configure(self) -> None:
-        print('#Loading ViTModel:',os.path.join(model_path,self.cfg.pretrained_model_name_or_path))
-        self.model: ViTModel = ViTModel(
-            ViTModel.config_class.from_pretrained(
-                hf_hub_download(
-                    repo_id=self.cfg.pretrained_model_name_or_path,
-                    filename="config.json",
-                    local_dir=model_path,
-                    endpoint='https://hf-mirror.com'
+        if os.path.exists('/stable-diffusion-cache/models/models--facebook--dino-vitb16'):
+            self.model: ViTModel = ViTModel(
+                ViTModel.config_class.from_pretrained(
+                    '/stable-diffusion-cache/models/models--facebook--dino-vitb16/snapshots/f205d5d8e640a89a2b8ef0369670dfc37cc07fc2/config.json'
                 )
             )
-        )
+        else:
+            print('#Loading ViTModel:',os.path.join(model_path,self.cfg.pretrained_model_name_or_path))
+            self.model: ViTModel = ViTModel(
+                ViTModel.config_class.from_pretrained(
+                    hf_hub_download(
+                        repo_id=self.cfg.pretrained_model_name_or_path,
+                        filename="config.json",
+                        local_dir=model_path,
+                        endpoint='https://hf-mirror.com'
+                    )
+                )
+            )
 
         if self.cfg.enable_gradient_checkpointing:
             self.model.encoder.gradient_checkpointing = True
