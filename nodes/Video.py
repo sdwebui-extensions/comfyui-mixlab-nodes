@@ -179,6 +179,9 @@ def split_video(video_path, video_segment_frames, transition_frames, output_dir)
         
         # 打印当前片段的起始帧和结束帧
         print(f"Segment {i+1}: Start Frame {start_frame}, End Frame {end_frame}")
+
+        if end_frame<start_frame:
+            break
         
         # 保存当前片段为一个视频文件
         segment_video_path = f"{output_dir}/segment_{i+1}.avi"
@@ -187,6 +190,7 @@ def split_video(video_path, video_segment_frames, transition_frames, output_dir)
         segment_video = cv2.VideoWriter(segment_video_path, fourcc, fps, (int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
                                                               int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))))
         
+
         for frame_num in range(start_frame, end_frame):
             ret, frame = video_capture.read()
             if ret:
@@ -620,8 +624,8 @@ class VideoCombine_Adv:
             },
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("video_file_path",)
+    RETURN_TYPES = ("SCENE_VIDEO",)
+    RETURN_NAMES = ("scenes_video",)
     OUTPUT_NODE = True
     CATEGORY = "♾️Mixlab/Video"
     FUNCTION = "run"
@@ -895,12 +899,12 @@ class scenesNode_:
         
         return {"required": {
                     "scenes_video": ('SCENE_VIDEO',),
-                     "index": ("INT", {"default": 0, "min": 0, "step": 1}),
+                    "index": ("INT", {"default": 0, "min": 0, "step": 1}),
                      
                      },}
 
     RETURN_TYPES = ('IMAGE','INT',)
-    RETURN_NAMES = ("frames","count",)
+    RETURN_NAMES = ("video frames (batch)","count",)
     # OUTPUT_IS_LIST = (False,)
 
     FUNCTION = "run"
@@ -908,7 +912,7 @@ class scenesNode_:
     INPUT_IS_LIST = True
 
     def load_video_cv_fallback(self, video, frame_load_cap, skip_first_frames):
-        print('#video',video)
+        # print('#video',video)
         try:
             video_cap = cv2.VideoCapture(video)
             if not video_cap.isOpened():
@@ -963,7 +967,7 @@ class scenesNode_:
         index=index[0]
         if len(scenes_video) > index:
             vp=scenes_video[index]
-
-            return self.load_video_cv_fallback(vp,0,0)
+        else:
+            vp=scenes_video[-1]
         
-        return ([], 0,)
+        return self.load_video_cv_fallback(vp,0,0)
