@@ -3,18 +3,147 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Mixlab APP</title>
+
     <style>
+        /* 定义滚动条轨道的背景颜色 */
+        ::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+            /* 轨道背景颜色 */
+        }
+
+        /* 定义滚动条滑块的颜色 */
+        ::-webkit-scrollbar-thumb {
+            background-color: #888;
+            /* 滑块颜色 */
+            border-radius: 4px;
+            /* 滑块圆角 */
+        }
+
+        /* 鼠标悬停时滚动条滑块的颜色 */
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+            /* 悬停时滑块颜色 */
+        }
+
+        /* 定义滚动条角落的颜色 */
+        ::-webkit-scrollbar-corner {
+            background-color: transparent;
+            /* 角落颜色 */
+        }
+
+        /* 设置滚动条宽度 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* 滚动条的宽度 */
+            height: 8px;
+            /* 滚动条的高度 */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            height: 8px;
+            /* 滚动条拇指的高度 */
+        }
+    </style>
+
+    <style>
+        /* 全局样式 */
+        /* 默认桌面布局 */
         body {
-            margin: 0;
-            padding: 0;
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 移动端布局 */
+        @media (max-width: 768px) {
+            body {
+                width: 96% !important;
+                padding: 10px !important;
+            }
+
+            /* 设置滚动条宽度 */
+            ::-webkit-scrollbar {
+                width: 4px;
+                /* 滚动条的宽度 */
+                height: 4px;
+                /* 滚动条的高度 */
+            }
+
+            ::-webkit-scrollbar-thumb {
+                height: 4px;
+                /* 滚动条拇指的高度 */
+            }
+
+            #workflow_submit_pannel {
+                width: 100% !important;
+                /* 确保面板在移动端的宽度适应屏幕 */
+                height: fit-content;
+                position: static !important;
+            }
+
+            #app_input_pannel {
+                max-height: none !important;
+            }
+
+            .app {
+                width: 100%;
+                margin-left: 0;
+                min-width: none !important;
+            }
+
+            .apps {
+                margin: 20px !important;
+                padding: 0 !important;
+            }
+
+            .panel {
+                min-width: 100% !important;
+                margin: 12px 0 !important;
+                width: fit-content !important;
+            }
+
+            .apps .card,
+            #history_container .card {
+                width: 100%;
+                margin: 12px 0;
+            }
+
+            .description {
+                width: 100%;
+            }
+
+            .output_card img,
+            video {
+                max-width: 100%;
+                margin: 8px 0;
+            }
+
+            .main_btn {
+                width: 100% !important;
+                max-width: none !important;
+                margin-top: 12px !important;
+            }
+
+            .status {
+                width: 100%;
+            }
         }
 
         .header {
             display: flex;
             align-items: center;
-            justify-content: space-around;
+            justify-content: flex-end;
+        }
+
+        #logo {
+            margin: 0 24px;
+            margin-bottom: 24px;
+            font-size: 12px;
+            padding: 0;
+            color: #4a4a4a;
+            border-bottom: 1px dashed #595959;
         }
 
         .app {
@@ -25,6 +154,20 @@
             user-select: none;
             margin-top: 32px;
             margin-bottom: 120px;
+            justify-content: flex-end;
+        }
+
+        .app .panel {
+            flex: none;
+            width: 66%;
+        }
+
+        .max_view {
+            justify-content: flex-start;
+        }
+
+        .max_view .panel {
+            flex: 1;
         }
 
         .apps {
@@ -40,7 +183,6 @@
             display: flex;
             flex-wrap: wrap;
         }
-
 
         .apps .card {
             width: 320px;
@@ -63,16 +205,31 @@
         }
 
         .selected {
-            box-shadow: 0px 0px 10px 10px #fbe9f0
+            box-shadow: 0px 0px 10px 10px #fbe9f0;
+        }
+
+        .image-with-grid {
+            position: relative;
+            width: fit-content;
+            display: flex;
+            background-size: 20px 20px;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+                linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+            background-position: 0 0, 10px 10px;
+        }
+
+        .image-with-grid> :first-child {
+            margin-left: 0;
+            margin-top: 0;
         }
 
         /* .card:hover {
-            box-shadow: 0px 0px 10px 10px #e9fbfa
-        } */
+    box-shadow: 0px 0px 10px 10px #e9fbfa;
+} */
 
         .card h5 {
             font-size: 14px;
-            margin: 0 0 10px 0
+            margin: 0 0 10px 0;
         }
 
         .card p {
@@ -116,7 +273,6 @@
             align-items: center;
         }
 
-
         .card .version {
             font-size: 12px;
         }
@@ -135,17 +291,26 @@
             color: #7f7f7f !important;
         }
 
-        .status_seed {
+        .detail_parent {
             display: flex;
             flex-direction: column;
             margin: 12px;
         }
 
-        .seeds {
+        .detail {
             font-size: 12px;
             margin-top: 4px;
         }
 
+        .detail .content {
+            margin-top: 6px;
+        }
+
+        #app_input_pannel {
+            max-height: calc(76vh - 28px);
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
 
         .description {
             display: flex;
@@ -170,9 +335,9 @@
             min-width: 400px;
             /* background: #eee; */
             margin: 24px;
-            flex: 1;
+            /* flex: 1; */
             align-items: center;
-            /* justify-content: center; */
+            /* justify-content: center;*/
         }
 
         .panel .header {
@@ -180,7 +345,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-
         }
 
         .panel h1 {
@@ -194,7 +358,7 @@
             width: fit-content;
             max-width: 100%;
             margin-left: 12px;
-            /*min-height: 200px;*/
+            min-height: 200px;
         }
 
         .input_card {
@@ -211,13 +375,11 @@
         .output_card {
             height: 100%;
             width: 100%;
-
             margin-top: 24px;
             display: flex;
             flex-wrap: wrap;
             /* justify-content: center;
-            align-items: center; */
-
+    align-items: center; */
         }
 
         .output_card img,
@@ -239,9 +401,9 @@
 
         .card textarea {
             width: 100%;
-            height: 'fit-content';
+            height: fit-content;
             /* min-width: 300px; */
-            margin-top: 12px;
+            margin-top: 14px;
             resize: none;
             overflow: hidden;
         }
@@ -255,18 +417,19 @@
             margin-top: 12px;
         }
 
-        .run_div {
+        #workflow_submit_pannel {
             position: fixed;
             bottom: 28px;
             display: flex;
-            left: 144px;
+            left: 72px;
             z-index: 100;
+            width: 480px;
             /* align-items: center; */
             /* justify-content: space-around; */
             /* width: calc(50% - 100px); */
             flex-direction: column;
             background-color: #f7f7f7;
-            box-shadow: 3px 3px 8px #cacaca;
+            box-shadow: 3px 3px 8px 3px #cacaca;
             border-radius: 8px;
         }
 
@@ -283,16 +446,85 @@
             height: 48px;
         }
 
-        .run_btn {
-            background: black;
-            color: white;
-            /* width: calc(50% - 100px); */
-            min-width: 200px;
-            max-width: 460px;
-            height: 48px;
-            border-radius: 8px;
+        .submit_div {
+            display: flex;
+            justify-content: space-between;
+        }
+
+
+        /* icon_btn样式 */
+        .icon_btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px !important;
+            min-width: 56px !important;
+            height: 40px !important;
+            /* 可根据需要调整高度 */
+            background-color: transparent !important;
+            /* 透明背景色 */
+            color: black !important;
+            /* 按钮文字或图标颜色 */
+            border: none !important;
+            /* 圆角 */
             cursor: pointer;
-            border: 3px solid;
+            /* 鼠标悬停时显示手型光标 */
+            transition: background-color 0.3s, color 0.3s;
+            /* 背景色和颜色过渡效果 */
+        }
+
+        .icon_btn:hover {
+            background-color: rgb(234, 235, 152) !important;
+            /* 悬浮时的背景色 */
+            color: black !important;
+            /* 悬浮时的图标颜色 */
+        }
+
+        .icon_btn svg {
+            fill: none;
+            /* 无填充色 */
+            stroke: currentColor;
+            /* 使用当前文本颜色描边 */
+            width: 24px;
+            /* SVG宽度 */
+            height: 24px;
+            /* SVG高度 */
+        }
+
+
+        .main_btn {
+            background: black !important;
+            color: white !important;
+            /* width: calc(50% - 100px); */
+            min-width: 200px !important;
+            max-width: 460px !important;
+            height: 48px !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            border: 3px solid !important;
+        }
+
+        .main_btn:hover {
+            border-color: yellow !important;
+            cursor: pointer !important;
+        }
+
+        #author {
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            cursor: pointer;
+            text-decoration: none;
+            color: black;
+        }
+
+        .mix_on {
+            color: #ffffff !important;
+            /* font-weight: 400; */
+            background: #232222;
         }
 
         button:hover {
@@ -323,9 +555,9 @@
         }
 
         /* .upload_btn:hover {
-            outline: 4px solid yellow;
-            color: yellow;
-        } */
+    outline: 4px solid yellow;
+    color: yellow;
+} */
 
         .show_text {
             font-size: 14px;
@@ -344,17 +576,25 @@
             font-weight: 300;
         }
 
+        label {
+            margin-bottom: 12px;
+            font-weight: 300;
+            background: #fcfcd3;
+            width: fit-content;
+            padding: 0 12px;
+            font-size: 12px;
+        }
+
         label::after {
             content: attr(data-content);
             /* Set the initial content using the data-content attribute */
             /* position: absolute; */
             /* top: 100%;
-            left: 0; */
+    left: 0; */
             margin-left: 4px;
             font-size: 12px;
             color: #555;
         }
-
 
         .card select,
         .card button,
@@ -368,8 +608,9 @@
             border-radius: 4px;
             margin-top: 8px;
         }
+    </style>
 
-
+    <style>
         .pickr .pcr-button {
             width: 56px !important;
             height: 56px !important;
@@ -390,11 +631,12 @@
         #editor_container {
             position: fixed;
             top: 0;
-            z-index: 9;
+            z-index: 9999;
             background: #eee;
             height: 100vh;
             width: 100%;
             display: none;
+            left: 0;
         }
 
 
@@ -422,35 +664,7 @@
             display: none;
         }
 
-        /* 定义滚动条轨道的背景颜色 */
 
-        ::-webkit-scrollbar-track {
-            background-color: #f1f1f1;
-            /* 轨道背景颜色 */
-        }
-
-        /* 定义滚动条滑块的颜色 */
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #888;
-            /* 滑块颜色 */
-            border-radius: 4px;
-            /* 滑块圆角 */
-        }
-
-        /* 鼠标悬停时滚动条滑块的颜色 */
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #555;
-            /* 悬停时滑块颜色 */
-        }
-
-        /* 定义滚动条角落的颜色 */
-
-        ::-webkit-scrollbar-corner {
-            background-color: transparent;
-            /* 角落颜色 */
-        }
 
         /* 
         .dynamic_prompt::after {
@@ -466,6 +680,16 @@
             user-select: none;
         }
     </style>
+
+    <style>
+        .editor_canvas {
+            border: 1px solid #ccc;
+            position: absolute;
+            top: 178px;
+            left: 49px;
+
+        }
+    </style>
     <!-- <script src="../../../scripts/api.js" type="module"></script> -->
     <link href="/extensions/comfyui-mixlab-nodes/lib/photoswipe.min.css" rel="stylesheet">
     <link href="/extensions/comfyui-mixlab-nodes/lib/classic.min.css" rel="stylesheet">
@@ -477,21 +701,39 @@
 
 <body>
 
-    <div id="editor_container">
-        <iframe style="width:100%; height:100vh;" id="miniPaint"
-            src="/extensions/comfyui-mixlab-nodes/lib/miniPaint-4.14.2/index.html" allow="camera"></iframe>
+    <div class="editor" id="editor_container">
+        <h1>蒙版绘制工具</h1>
+        <div class="controls">
+            <div class="tool-group">
+                <button id="autoCut">Auto Cut</button>
+                <select id="modelSelect"></select>
+                <button id="brush" class="active">画笔</button>
+                <button id="eraser">橡皮擦</button>
+            </div>
+            <div class="tool-group">
+                <label for="size">笔刷大小：</label>
+                <input type="range" id="size" min="1" max="50" value="10">
+                <span id="sizeValue">10</span>
+            </div>
+            <div class="tool-group">
+                <button id="clear">清空画布</button>
+                <button id="save">保存蒙版</button>
+                <button id="closeEditor">Close</button>
+            </div>
+        </div>
+        <div id="canvasContainer">
+            <canvas id="baseCanvas" class="editor_canvas" width="800" height="600"></canvas>
+            <canvas id="maskCanvas" class="editor_canvas" width="800" height="600"></canvas>
+        </div>
     </div>
+
+
     <div class="header">
-        <div id="logo" style="margin: 0 24px;
-            margin-bottom: 24px;
-            padding: 8px;
-            color: #4a4a4a;
-            border-bottom: 1px dashed #595959;">Explore your creative potential with <a class="link"
+        <div id="logo">Explore your creative potential with <a class="link"
                 href="https://github.com/shadowcz007/comfyui-mixlab-nodes" target="_blank">mixlab-nodes</a> / 尽情发挥你的创意
             <br>
             <a class="link" href="https://www.mixcomfy.com" target="_blank">ComfyUI中文爱好者社区推荐</a>
         </div>
-
         <a id="login_btn" target="_blank" href="https://discord.gg/xbP2GZF6gn" style="text-decoration: none;
         color: black;font-size:12px">
             <svg height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" data-view-component="true"
@@ -508,36 +750,7 @@
         import PhotoSwipeLightbox from '/extensions/comfyui-mixlab-nodes/lib/photoswipe-lightbox.esm.min.js'
         // console.log(Lightbox)
         import { api } from "../../../scripts/api.js";
-
-
-        // ComfyUI\web\extensions\core\dynamicPrompts.js
-        // 官方实现修改
-        // Allows for simple dynamic prompt replacement
-        // Inputs in the format {a|b} will have a random value of a or b chosen when the prompt is queued.
-
-        /*
-         * Strips C-style line and block comments from a string
-         */
-        function stripComments(str) {
-            return str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
-        }
-
-        function dynamicPrompts(prompt) {
-            prompt = stripComments(prompt);
-            while (prompt.replace("\\{", "").includes("{") && prompt.replace("\\}", "").includes("}")) {
-                const startIndex = prompt.replace("\\{", "00").indexOf("{");
-                const endIndex = prompt.replace("\\}", "00").indexOf("}");
-
-                const optionsString = prompt.substring(startIndex + 1, endIndex);
-                const options = optionsString.split("|");
-
-                const randomIndex = Math.floor(Math.random() * options.length);
-                const randomOption = options[randomIndex];
-
-                prompt = prompt.substring(0, startIndex) + randomOption + prompt.substring(endIndex + 1);
-            }
-            return prompt
-        }
+        import Command from '/extensions/comfyui-mixlab-nodes/javascript/command.js'
 
 
         // console.log('api', api)
@@ -545,94 +758,22 @@
             'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c6QAAALZJREFUKFOFkLERwjAQBPdbgBkInECGaMLUQDsE0AkRVRAYWqAByxldPPOWHwnw4OBGye1p50UDSoA+W2ABLPN7i+C5dyC6R/uiAUXRQCs0bXoNIu4QPQzAxDKxHoALOrZcqtiyR/T6CXw7+3IGHhkYcy6BOR2izwT8LptG8rbMiCRAUb+CQ6WzQVb0SNOi5Z2/nX35DRyb/ENazhpWKoGwrpD6nICp5c2qogc4of+c7QcrhgF4Aa/aoAFHiL+RAAAAAElFTkSuQmCC'
 
 
-        function get_url() {
-            let api_host = `${window.location.hostname}:${window.location.port}`
-            let api_base = ''
-            let url = `${window.location.protocol}//${api_host}${api_base}`
-            return url
-        }
-
-        async function uploadImage(blob, fileType = '.png', filename) {
-            const body = new FormData()
-            body.append(
-                'image',
-                new File([blob], (filename || new Date().getTime()) + fileType)
-            )
-
-            const url = get_url()
-
-            const resp = await fetch(`${url}/upload/image`, {
-                method: 'POST',
-                body
-            })
-
-            let data = await resp.json()
-            // console.log(data)
-            let { name, subfolder } = data
-            let src = `${url}/view?filename=${encodeURIComponent(
-                name
-            )}&type=input&subfolder=${subfolder}&rand=${Math.random()}`
-
-            return { url: src, name }
-
-        };
-
-        async function uploadMask(arrayBuffer, imgurl) {
-            const body = new FormData()
-            const filename = 'clipspace-mask-' + performance.now() + '.png'
-
-            let original_url = new URL(imgurl)
-
-            const original_ref = { filename: original_url.searchParams.get('filename') }
-
-            let original_subfolder = original_url.searchParams.get('subfolder')
-            if (original_subfolder) original_ref.subfolder = original_subfolder
-
-            let original_type = original_url.searchParams.get('type')
-            if (original_type) original_ref.type = original_type
-
-            body.append('image', arrayBuffer, filename)
-            body.append('original_ref', JSON.stringify(original_ref))
-            body.append('type', 'input')
-            body.append('subfolder', 'clipspace')
-
-            const url = get_url()
-
-            const resp = await fetch(`${url}/upload/mask`, {
-                method: 'POST',
-                body
-            })
-
-            // console.log(resp)
-            let data = await resp.json()
-            let { name, subfolder, type } = data
-            let src = `${url}/view?filename=${encodeURIComponent(
-                name
-            )}&type=${type}&subfolder=${subfolder}&rand=${Math.random()}`
-
-            return { url: src, name: 'clipspace/' + name }
-        }
-
-
-        const parseImageToBase64 = url => {
-            return new Promise((res, rej) => {
-                fetch(url)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const reader = new FileReader()
-                        reader.onloadend = () => {
-                            const base64data = reader.result
-                            res(base64data)
-                            // 在这里可以将base64数据用于进一步处理或显示图片
-                        }
-                        reader.readAsDataURL(blob)
-                    })
-                    .catch(error => {
-                        console.log('发生错误:', error)
-                    })
-            })
-        }
-
+        const uploadImageIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="7 10 12 5 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="12" y1="5" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`;
+        const clipboardIcon = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="5" y="3" width="14" height="18" rx="2" ry="2"/>
+  <path d="M9 3h6a2 2 0 0 1 2 2v1H7V5a2 2 0 0 1 2-2z"/>
+</svg>`
+        const editIcon = `
+       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 20h9"/>
+  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19H4v-3L16.5 3.5z"/>
+</svg>
+`
         //给load image to batch节点使用的输入
         function createBase64ImageForLoadImageToBatch(imageElement, nodeId, bs) {
             let im = new Image()
@@ -641,8 +782,13 @@
             imageElement.appendChild(im);
 
             let base64s = imageElement.querySelectorAll('.base64')
-            //更新输入
-            window._appData.data[nodeId].inputs.images.base64 = Array.from(base64s, (b) => b.src)
+            //更新输入 //兼容 ，如果data没有则不更新data
+            if (window._appData.data) window._appData.data[nodeId].inputs.images.base64 = Array.from(base64s, (b) => b.src)
+            //更新输入参数
+            updateInputData(nodeId, (inputs) => {
+                inputs.images.base64 = Array.from(base64s, (b) => b.src)
+                return inputs
+            })
 
             // 删除
             im.addEventListener('click', e => {
@@ -650,444 +796,176 @@
                 im.remove();
                 let base64s = imageElement.querySelectorAll('.base64')
                 //更新输入
-                window._appData.data[nodeId].inputs.images.base64 = Array.from(base64s, (b) => b.src)
-            })
-        }
-
-        const blobToBase64 = blob => {
-            return new Promise((res, rej) => {
-                const reader = new FileReader()
-                reader.onloadend = () => {
-                    const base64data = reader.result
-                    res(base64data)
-                    // 在这里可以将base64数据用于进一步处理或显示图片
-                }
-                reader.readAsDataURL(blob)
-            })
-        }
-
-
-        function base64ToBlob(base64) {
-            // 去除base64编码中的前缀
-            const base64WithoutPrefix = base64.replace(/^data:image\/\w+;base64,/, '');
-
-            // 将base64编码转换为字节数组
-            const byteCharacters = atob(base64WithoutPrefix);
-
-            // 创建一个存储字节数组的数组
-            const byteArrays = [];
-
-            // 将字节数组放入数组中
-            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-                const slice = byteCharacters.slice(offset, offset + 1024);
-
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-
-            // 创建blob对象
-            const blob = new Blob(byteArrays, { type: 'image/png' }); // 根据实际情况设置MIME类型
-
-            return blob;
-        }
-
-
-        // 获取 rembg 模型
-        async function get_rembg_models() {
-            try {
-                const response = await fetch(`${get_url()}/mixlab/folder_paths`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: 'rembg'
-                    })
+                if (window._appData.data) window._appData.data[nodeId].inputs.images.base64 = Array.from(base64s, (b) => b.src)
+                updateInputData(nodeId, (inputs) => {
+                    inputs.images.base64 = Array.from(base64s, (b) => b.src)
+                    return inputs
                 })
-
-                const data = await response.json()
-                // console.log(data)
-                return data.names
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
-        //自动抠图
-        async function run_rembg(model, base64) {
-            try {
-                const response = await fetch(`${get_url()}/mixlab/rembg`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
-                        base64
-                    })
-                })
-
-                const data = await response.json()
-                // console.log(data)
-                return data.data
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
-        function convertImageToBlackBasedOnAlpha(image) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            // Draw the image onto the canvas
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
-
-            // Get the image data from the canvas
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-
-            // Modify the RGB values based on the alpha channel
-            for (let i = 0; i < pixels.length; i += 4) {
-                const alpha = pixels[i + 3];
-                if (alpha !== 0) {
-                    // Set non-transparent pixels to black
-                    pixels[i] = 0; // Red
-                    pixels[i + 1] = 0; // Green
-                    pixels[i + 2] = 0; // Blue
-                }
-            }
-
-            // Put the modified image data back onto the canvas
-            ctx.putImageData(imageData, 0, 0);
-
-            // Convert the modified canvas to base64 data URL
-            const base64ImageData = canvas.toDataURL('image/png'); // Replace 'png' with your desired image format
-
-            return base64ImageData;
+            })
         }
 
 
 
         // 图像编辑
         async function editImage(image, data) {
-            //判断mask是否有输出
-            let isMask = data.options.hasMask;
 
+            let baseImage = await Command.createImage(data.options.defaultImage)
             //app
             document.body.querySelector('.app').style.display = 'none'
             document.body.querySelector('#author').style.display = 'none'
 
             let editor = document.querySelector('#editor_container')
             editor.style.display = 'block';
-            const iframe = editor.querySelector('iframe');
 
-            const sleep = (t = 1000) => {
-                return new Promise((res, rej) => {
-                    setTimeout(() => {
-                        res(true)
-                    }, t)
-                })
-            }
 
-            //清空 图层
-            const removeAllLayer = () => {
-                let Layers = iframe.contentWindow.Layers;
-                //清空
-                Layers.reset_layers()
-                Layers.refresh_gui()
-            }
+            // 使用示例
+            const maskDrawer = new MaskDrawer(
+                'baseCanvas',
+                'maskCanvas',
+                'brush',
+                'eraser',
+                'size',
+                'sizeValue',
+                'clear',
+                'save',
+                'autoCut',
+                'modelSelect',
+                'closeEditor'
+            );
 
-            // 复原
-            const resetLayer = () => {
-                let Layers = iframe.contentWindow.Layers;
-                for (const layer of Layers.get_layers()) {
-                    layer.visible = true;
-                }
-                Layers.refresh_gui()
-            }
-            //取image
-            const getImageBase64FromLayer = () => {
-                let Layers = iframe.contentWindow.Layers;
-                let tempCanvas = document.createElement("canvas");
-                let tempCtx = tempCanvas.getContext("2d");
-                let dim = Layers.get_dimensions();
-                tempCanvas.width = dim.width;
-                tempCanvas.height = dim.height;
-                for (const layer of Layers.get_layers()) {
-                    if (layer.name === 'Image_' + data.id) {
-                        layer.visible = true;
-                    } else {
-                        layer.visible = false;
+            // 对外提供的接口
+            maskDrawer.newImageForMaskEdit(baseImage);
+
+
+            function imageParseMask(im) {
+                // 创建一个临时canvas
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // 设置临时canvas的尺寸
+                tempCanvas.width = im.naturalWidth;
+                tempCanvas.height = im.naturalHeight;
+
+                // 将图像绘制到临时canvas上
+                tempCtx.drawImage(im, 0, 0);
+
+                // 获取图像数据
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+
+                // 遍历每个像素并修改透明通道
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] < 255) { // 透明
+                        data[i] = 0;     // R
+                        data[i + 1] = 255; // G
+                        data[i + 2] = 0; // B
+                        data[i + 3] = 255 - data[i + 3]; // A
+                    } else { // 不透明
+                        data[i + 3] = 0; // 透明
                     }
                 }
-                Layers.refresh_gui()
 
-                Layers.convert_layers_to_canvas(tempCtx);
-                return tempCanvas.toDataURL()
+                // 将修改后的数据放回临时canvas
+                tempCtx.putImageData(imageData, 0, 0);
+
+                return tempCanvas;
             }
 
-            //add mask
-            const addMask = (id, name, image) => {
-                let Layers = iframe.contentWindow.Layers;
-                var new_mask_layer = {
-                    id,
-                    name,
-                    type: 'brush',
-                    data: [],
-                    render_function: ['brush', 'render'],
-                    width: image.naturalWidth || image.width,
-                    height: image.naturalHeight || image.height,
+            let im = await Command.createImage(image.src)
+            console.log(im.naturalWidth)
+            let maskElement = imageParseMask(im)
+            maskDrawer.loadMask(maskElement);
 
-                };
-                Layers.insert(new_mask_layer);
-            }
-
-            //add image
-            const addImage = (id, name, image) => {
-                let Layers = iframe.contentWindow.Layers;
-                var new_mask_layer = {
-                    id,
-                    name,
-                    type: 'image',
-                    data: image,
-                    width: image.naturalWidth || image.width,
-                    height: image.naturalHeight || image.height,
-                    width_original: image.naturalWidth || image.width,
-                    height_original: image.naturalHeight || image.height,
-                };
-                Layers.insert(new_mask_layer);
-            }
-
-            //默认的画笔size设置大
-            // let inputSize = (iframe.contentDocument.getElementById('size')).querySelector('input');
-            // inputSize.value=50;
-            // (iframe.contentDocument.getElementById('size')).querySelector('.increase_number').click()
+            // maskDrawer.saveMask();
+            // maskDrawer.autoCut();
+            // maskDrawer.initializeModelOptions(['Model 1', 'Model 2', 'Model 3']);
 
             //自动抠图
-            let autoMaskSelect = iframe.contentDocument.getElementById('automask_image_mixlab');
-            const select = iframe.contentDocument.getElementById('automask_models_mixlab');
-            if (select.children.length === 0) {
-                let rembgModels = await get_rembg_models()
-                // 遍历模型列表并创建选项
-                for (const model of rembgModels) {
-                    const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
-                    select.appendChild(option);
-                }
+            let rembgModels = await Command.get_rembg_models()
+            // 遍历模型列表并创建选项
+            maskDrawer.initializeModelOptions(rembgModels)
+
+            maskDrawer.close = () => {
+                editor.style.display = 'none';
+                document.body.querySelector('.app').style.display = 'flex'
+                document.body.querySelector('#author').style.display = 'block'
             }
 
-            let autoMaskBtn = iframe.contentDocument.getElementById('automask_image_mixlab');
-            if (!autoMaskBtn.getAttribute('init')) autoMaskBtn.addEventListener('click', async e => {
+            maskDrawer.autoCutCallback = async (modelName, base64) => {
                 //api请求
-                let base64 = getImageBase64FromLayer()
-                resetLayer()
-
-                let res = await run_rembg(select.value, base64)
+                let res = await Command.run_rembg(modelName, base64)
                 const match = res.match(/^data:image\/(\w+);base64,/);
                 if (!match) {
                     res = 'data:image/png;base64,' + res
                 }
 
-                let image = await createImage(res)
+                let image = await Command.createImage(res)
 
-                let mb = convertImageToBlackBasedOnAlpha(image)
-                let mask = await createImage(mb)
-                let id = Layers.auto_increment;
-                addImage(id, 'Mask_' + data.id + id, mask)
-            })
+                let mb = Command.convertImageToBlackBasedOnAlpha(image)
+                let mask = await Command.createImage(mb)
+                return mask
+            }
 
-            autoMaskBtn.setAttribute('init', 1)
-            let cancelImageBtn = iframe.contentDocument.getElementById('cancel_image_mixlab');
-            if (!cancelImageBtn.getAttribute('init')) cancelImageBtn.addEventListener('click', e => {
+            maskDrawer.saveCallback = async (base64, width, height) => {
+
+                let fileBlob = Command.base64ToBlob(base64)
+                // // 获取读取的文件内容，即 Blob 对象
+                let hashId = await Command.calculateImageHash(fileBlob)
+
+                if (window._appData.data && hashId == window._appData.data[data.id].hashId) {
+                    document.body.querySelector('.app').style.display = 'flex'
+                    document.body.querySelector('#author').style.display = 'block'
+                    return;
+                }
+
+                //底图
+                const { url: imgurl } = await Command.uploadImage(
+                    Command.base64ToBlob(data.options.defaultImage
+                    ))
+
+                //mask
+                let { url, name } = await Command.uploadMask(fileBlob, imgurl);
+                // 在这里可以对 Blob 对象进行进一步处理
+                // imageElement.src = url;
+                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image = name;
+                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].hashId = hashId;
+
+                //更新输入参数
+                updateInputData(data.id, (inputs) => {
+                    inputs.image = name
+                    return inputs
+                })
+
+
+                // console.log("上传的文件：", url, data.id, name);
+                //更新图片
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+
+                const defaultImage = await Command.createImage(data.options.defaultImage)
+                ctx.drawImage(defaultImage, 0, 0, width, height);
+
+                // 绘制base64图片
+                // const base64Image = base64
+                const base64ImageObj = await Command.createImage(base64)
+                ctx.globalCompositeOperation = 'destination-in';
+                ctx.drawImage(base64ImageObj, 0, 0, width, height);
+                image.src = canvas.toDataURL();
+
+                document.body.querySelector('.app').style.display = 'flex'
+                document.body.querySelector('#author').style.display = 'block'
+                // console.log(base64);
                 editor.style.display = 'none';
-                document.body.querySelector('.app').style.display = 'flex'
-                document.body.querySelector('#author').style.display = 'block'
-            })
-
-            cancelImageBtn.setAttribute('init', 1)
-            // 获取 id 为 "mix" 的 button 元素
-            let saveImageBtn = iframe.contentDocument.getElementById('save_image_mixlab');
-            saveImageBtn.style = `width: 98px;
-            height: 36px;
-            margin: 0 12px;
-            background-color: var(--background-color-active);
-            color: var(--text-color-active);`
-            if (!saveImageBtn.getAttribute('init')) saveImageBtn.addEventListener('click', async e => {
-                //保存，并更新图片
-                e.preventDefault();
-
-                //image的合成，排除mask和brush
-                if (isMask) {
-
-                    let Layers = iframe.contentWindow.Layers;
-                    let tempCanvas = document.createElement("canvas");
-                    let tempCtx = tempCanvas.getContext("2d");
-                    let dim = Layers.get_dimensions();
-                    tempCanvas.width = dim.width;
-                    tempCanvas.height = dim.height;
-
-                    //todo 获取Image更新后的数据(暂不支持image的修改)
-
-                    for (const layer of Layers.get_layers()) {
-                        if (layer.name !== 'Image_' + data.id) {
-                            layer.visible = true;
-                        } else {
-                            layer.visible = false;
-                        }
-                    }
-                    Layers.refresh_gui()
-
-                    Layers.convert_layers_to_canvas(tempCtx);
-
-                    // 复原
-                    resetLayer()
-
-                    // 获取图像数据
-                    const imageData = tempCtx.getImageData(0, 0, dim.width, dim.height);
-                    const imageDataData = imageData.data;
-
-                    // 反相图像数据
-                    for (let i = 0; i < imageDataData.length; i += 4) {
-                        // imageDataData[i] = 255 - imageDataData[i];
-                        // imageDataData[i + 1] = 255 - imageDataData[i + 1];
-                        // imageDataData[i + 2] = 255 - imageDataData[i + 2];
-                        imageDataData[i + 3] = 255 - imageDataData[i + 3]; // 反相透明度
-                    }
-
-                    // 更新画布
-                    tempCtx.putImageData(imageData, 0, 0);
-
-
-                    let base64 = tempCanvas.toDataURL();
-                    // console.log(base64);
-                    editor.style.display = 'none';
-
-                    let fileBlob = base64ToBlob(base64)
-                    // // 获取读取的文件内容，即 Blob 对象
-                    let hashId = await calculateImageHash(fileBlob)
-
-                    if (hashId == window._appData.data[data.id].hashId) {
-                        document.body.querySelector('.app').style.display = 'flex'
-                        document.body.querySelector('#author').style.display = 'block'
-                        return;
-                    }
-
-                    //底图
-                    const { url: imgurl } = await uploadImage(base64ToBlob(data.options.defaultImage))
-                    //mask
-                    let { url, name } = await uploadMask(fileBlob, imgurl);
-                    // 在这里可以对 Blob 对象进行进一步处理
-                    // imageElement.src = url;
-                    window._appData.data[data.id].inputs.image = name;
-                    window._appData.data[data.id].hashId = hashId;
-
-                    // console.log("上传的文件：", url, data.id, name);
-                    //更新图片
-                    const canvas = document.createElement("canvas");
-                    canvas.width = dim.width;
-                    canvas.height = dim.height;
-
-                    const ctx = canvas.getContext('2d');
-
-                    const defaultImage = await createImage(data.options.defaultImage)
-                    ctx.drawImage(defaultImage, 0, 0, dim.width, dim.height);
-
-                    // 绘制base64图片
-                    // const base64Image = base64
-                    const base64ImageObj = await createImage(base64)
-                    ctx.globalCompositeOperation = 'destination-in';
-                    ctx.drawImage(base64ImageObj, 0, 0, dim.width, dim.height);
-                    image.src = canvas.toDataURL();
-
-                }
-
-                document.body.querySelector('.app').style.display = 'flex'
-                document.body.querySelector('#author').style.display = 'block'
-            })
-
-            saveImageBtn.setAttribute('init', 1)
-
-            var Layers = iframe.contentWindow.Layers;
-            // console.log(Layers)
-
-            //判断是否已经存在
-            let layers1 = Layers.get_layers();
-
-            //通过layer.link.src 判断是否图片更新
-            console.log(layers1.filter(l => l.name == 'Image_' + data.id)[0]?.link?.currentSrc !== data.options.defaultImage)
-            if (layers1.filter(l => l.name == 'Image_' + data.id)[0]
-                && layers1.filter(l => l.name == 'Image_' + data.id)[0].link.src !== data.options.defaultImage) {
-                //清空图层
-                removeAllLayer();
-                layers1 = [];
-                await sleep()
             }
 
-            let im = await createImage(data.options.defaultImage)
-            // console.log(layers1, layers1.length)
-            if (!layers1.filter(l => l.name == 'Image_' + data.id)[0]) {
-                addImage(0, 'Image_' + data.id, im)
-            }
 
-            if (isMask) {
-                if (!layers1.filter(l => l.name == 'Mask_' + data.id)[0]) {
-                    addMask(1, 'Mask_' + data.id, im)
-                }
-            }
 
         }
 
 
-
-
-        async function getQueue(clientId) {
-            try {
-
-                const res = await fetch(`${get_url()}/queue`);
-                const data = await res.json();
-                return {
-                    // Running action uses a different endpoint for cancelling
-                    Running: Array.from(data.queue_running, prompt => {
-                        if (prompt[3].client_id === clientId) {
-                            let prompt_id = prompt[1];
-                            return {
-                                prompt_id,
-                                remove: () => interrupt(),
-                            }
-                        }
-                    }),
-                    Pending: data.queue_pending.map((prompt) => ({ prompt })),
-                };
-            } catch (error) {
-                console.error(error);
-                return { Running: [], Pending: [] };
-            }
-        }
-
-
-        async function interrupt() {
-            try {
-                await fetch(`${get_url()}/interrupt`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: undefined
-                });
-
-            } catch (error) {
-                console.error(error)
-            }
-            return true
-        }
 
         // 种子的处理
         function randomSeed(seed, data) {
@@ -1116,94 +994,36 @@
 
         function updateSeed(id, val) {
             // console.log(val)
-            if (window._appData.data[id].inputs.seed && !Array.isArray(window._appData.data[id].inputs.seed)) window._appData.data[id].inputs.seed = Math.round(val);
-            if (window._appData.data[id].inputs.noise_seed && !Array.isArray(window._appData.data[id].inputs.noise_seed)) window._appData.data[id].inputs.noise_seed = Math.round(val);
+            if (window._appData.data
+                && window._appData.data[id].inputs.seed
+                && !Array.isArray(window._appData.data[id].inputs.seed)) window._appData.data[id].inputs.seed = Math.round(val);
+            if (window._appData.data
+                && window._appData.data[id].inputs.noise_seed
+                && !Array.isArray(window._appData.data[id].inputs.noise_seed)) window._appData.data[id].inputs.noise_seed = Math.round(val);
+
+            //更新输入参数
+            updateInputData(id, (inputs) => {
+                inputs.seed = Math.round(val);
+                inputs.noise_seed = Math.round(val);
+                return inputs
+            })
+
         }
 
-
-        function queuePrompt(appInfo, promptWorkflow, seed, client_id) {
-            // appinfo升级后 兼容，补丁
-            for (const id in promptWorkflow) {
-                if (promptWorkflow[id].class_type == 'AppInfo') {
-                    promptWorkflow[id].inputs.category = promptWorkflow[id].inputs.category || ""
+        //更新输入参数
+        function updateInputData(nodeId, callback) {
+            for (let index = 0; index < window._appData.input.length; index++) {
+                const inp = window._appData.input[index];
+                if (inp.id === nodeId) {
+                    window._appData.input[index].inputs = callback(window._appData.input[index].inputs);
                 }
             }
-            // 随机seed
-            promptWorkflow = randomSeed(seed, promptWorkflow);
-
-            // //动态提示,改为输入的时候，手动触发
-            // for (const id in promptWorkflow) {
-            //     let node = promptWorkflow[id]
-            //     if (["TextInput_", "CLIPTextEncode", "PromptSimplification", "ChinesePrompt_Mix"].includes(
-            //         node.class_type
-            //     )) {
-            //         if (node.class_type == "PromptSimplification") {
-            //             promptWorkflow[id].inputs.prompt = dynamicPrompts(node.inputs.prompt);
-            //         } else {
-            //             promptWorkflow[id].inputs.text = dynamicPrompts(node.inputs.text);
-            //         }
-            //         console.log('#动态提示', promptWorkflow[id].inputs)
-            //     }
-            // }
-
-            let url = get_url()
-            const data = JSON.stringify({ prompt: promptWorkflow, client_id });
-            fetch(`${url}/prompt`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: data,
-            })
-                .then(async response => {
-                    // Handle response here
-                    // console.log(response)
-                    let res = await response.json();
-                    window.prompt_ids[res.prompt_id] = {
-                        appInfo,
-                        prompt_id: res.prompt_id
-                    }
-                })
-                .catch(error => {
-                    // Handle error here
-                });
         }
 
 
-        function success(isSuccess, btn, text) {
-            isSuccess ? btn.innerText = 'success' : text;
-            setTimeout(() => {
-                btn.innerText = text;
-            }, 5000)
-        }
 
         async function get_my_app(category = "", filename = null) {
-            let url = get_url()
-            const res = await fetch(`${url}/mixlab/workflow`, {
-                method: 'POST',
-                mode: 'cors', // 允许跨域请求
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    task: 'my_app',
-                    filename,
-                    category
-                })
-            })
-            let result = await res.json();
-            let data = [];
-            try {
-                for (const res of result.data) {
-                    let { output, app } = res.data;
-                    if (app.filename) data.push({
-                        ...app,
-                        data: output,
-                        date: res.date
-                    })
-                }
-            } catch (error) {
-            }
+            let data = await Command.get_my_app(category, filename);
 
             // 排序 
             let appSelected = localStorage.getItem('app_selected')
@@ -1216,7 +1036,7 @@
                             if (i !== 0) {
                                 const targetElement = array.splice(i, 1)[0];
 
-                                let nt = (await get_my_app(targetElement.category, targetElement.filename))[0];
+                                let nt = (await Command.get_my_app(targetElement.category, targetElement.filename))[0];
 
                                 array.unshift(nt);
                             }
@@ -1309,20 +1129,20 @@
                 copyText.style.marginLeft = '18px';
                 copyText.addEventListener('click', e => {
                     e.preventDefault();
-                    copyTextToClipboard((window._appData.share_prefix || '') + " " + output_card.outerHTML, (r) => success(r, copyText, 'copy text for share'))
+                    Command.copyTextToClipboard((window._appData.share_prefix || '') + " " + output_card.outerHTML, (r) => Command.success(r, copyText, 'copy text for share'))
                 })
             }
 
             copyImage.addEventListener('click', e => {
                 e.preventDefault();
-                // copyHtmlWithImagesToClipboard(output_card.outerHTML)
-                copyImagesToClipboard(output_card.outerHTML, (r) => success(r, copyImage, 'copy image'))
-                // copyTextToClipboard()
+                // Command.copyHtmlWithImagesToClipboard(output_card.outerHTML)
+                Command.copyImagesToClipboard(output_card.outerHTML, (r) => Command.success(r, copyImage, 'copy image'))
+                // Command.copyTextToClipboard()
             })
             copyHTML.addEventListener('click', e => {
                 e.preventDefault();
-                copyHtmlWithImagesToClipboard((window._appData.share_prefix || '') + " " + output_card.outerHTML, (r) => success(r, copyHTML, 'copy as html'))
-                // copyImagesToClipboard(output_card.outerHTML)
+                Command.copyHtmlWithImagesToClipboard((window._appData.share_prefix || '') + " " + output_card.outerHTML, (r) => Command.success(r, copyHTML, 'copy as html'))
+                // Command.copyImagesToClipboard(output_card.outerHTML)
             })
 
             //是否显示复制图片，复制html两个按钮
@@ -1357,7 +1177,7 @@
                     let a = document.createElement('div');
                     a.id = `output_${node.id}`
 
-                    let img = await createImage(url)
+                    let img = await Command.createImage(url)
 
                     a.appendChild(img)
                     // a.setAttribute('data-pswp-width', img.naturalWidth);
@@ -1468,13 +1288,6 @@
         }
 
 
-        async function calculateImageHash(blob) {
-            const buffer = await blob.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-            return hashHex;
-        }
 
         async function handleClipboardImage(imageElement, data) {
             //data.class_type === 'LoadImagesToBatch'
@@ -1486,21 +1299,27 @@
                         if (type.startsWith('image/')) {
                             const fileBlob = await clipboardItem.getType(type);
                             // // 获取读取的文件内容，即 Blob 对象
-                            let hashId = await calculateImageHash(fileBlob)
+                            let hashId = await Command.calculateImageHash(fileBlob)
 
-                            if (hashId == window._appData.data[data.id].hashId) return
+                            if (window._appData.data && hashId == window._appData.data[data.id].hashId) return
 
-                            let base64 = await blobToBase64(fileBlob)
+                            let base64 = await Command.blobToBase64(fileBlob)
 
                             if (data.class_type === 'LoadImagesToBatch') {
                                 createBase64ImageForLoadImageToBatch(imageElement, data.id, base64)
                             } else {
-                                let { url, name } = await uploadImage(fileBlob);
+                                let { url, name } = await Command.uploadImage(fileBlob);
                                 // 在这里可以对 Blob 对象进行进一步处理
                                 imageElement.src = url;
-                                window._appData.data[data.id].inputs.image = name;
-                                window._appData.data[data.id].hashId = hashId;
+                                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image = name;
+                                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].hashId = hashId;
                                 console.log("上传的文件：", url, data.id, name);
+
+                                //更新输入参数
+                                updateInputData(data.id, (inputs) => {
+                                    inputs.image = name;
+                                    return inputs
+                                })
 
                                 //更换option里的default image
                                 window._appData.input = Array.from(window._appData.input, inp => {
@@ -1519,130 +1338,16 @@
         }
 
 
-        function copyHtmlWithImagesToClipboard(data, cb) {
-            // 创建一个临时div元素
-            const tempDiv = document.createElement('div');
 
-            // 将HTML字符串赋值给div的innerHTML属性
-            tempDiv.innerHTML = data;
-
-            // 获取div中的所有图像元素
-            const images = tempDiv.getElementsByTagName('img');
-
-            // 遍历图像元素，并将图像数据转换为Base64编码
-            for (let i = 0; i < images.length; i++) {
-                const image = images[i];
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-
-                // 设置canvas尺寸与图像尺寸相同
-                canvas.width = image.width;
-                canvas.height = image.height;
-
-                // 在canvas上绘制图像
-                context.drawImage(image, 0, 0);
-
-                // 将canvas转换为Base64编码
-                const imageData = canvas.toDataURL();
-
-                // 将Base64编码替换图像元素的src属性
-                image.src = imageData;
-            }
-
-
-            let richText = tempDiv.innerHTML;
-
-            // 创建一个新的Blob对象，并将富文本字符串作为数据传递进去
-            const blob = new Blob([richText], { type: 'text/html' });
-
-            // 创建一个ClipboardItem对象，并将Blob对象添加到其中
-            const clipboardItem = new ClipboardItem({ 'text/html': blob });
-
-            // 使用Clipboard API将内容复制到剪贴板
-            navigator.clipboard.write([clipboardItem])
-                .then(() => {
-                    console.log('富文本已成功复制到剪贴板');
-                    tempDiv.remove()
-                    if (cb) cb(true)
-                })
-                .catch((error) => {
-                    console.error('复制到剪贴板失败:', error);
-                    tempDiv.remove()
-                    if (cb) cb(false)
-                });
-
-        }
 
         // const htmlWithImages = "<p>这是要复制的HTML内容</p><img src='data:image/png;base64,iVBORw0KG...'>"
-        // copyHtmlWithImagesToClipboard(htmlWithImages);
+        // Command.copyHtmlWithImagesToClipboard(htmlWithImages);
 
-        function copyImagesToClipboard(html, cb) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            const images = tempDiv.querySelectorAll('img');
-            const promises = Array.from(images).map((image) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = image.src;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const context = canvas.getContext('2d');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        context.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => {
-                            const clipboardItem = new ClipboardItem({ 'image/png': blob });
-                            navigator.clipboard.write([clipboardItem])
-                                .then(() => {
-                                    resolve();
-                                    tempDiv.remove()
-                                    if (cb) cb(true)
-                                })
-                                .catch((error) => {
-                                    reject(error);
-                                    tempDiv.remove()
-                                    if (cb) cb(false)
-                                });
-                        });
-                    };
-                });
-            });
-            Promise.all([...promises])
-                .then(() => {
-                    console.log('所有图片已成功复制到剪贴板');
-                    if (cb) cb(true)
-                    tempDiv.remove()
-                })
-                .catch((error) => {
-                    console.error('复制到剪贴板失败:', error);
-                    if (cb) cb(false)
-                    tempDiv.remove()
-                });
-        }
 
-        function copyTextToClipboard(html, cb) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-
-            const text = tempDiv.innerText;
-            const textData = new ClipboardItem({ 'text/plain': new Blob([text], { type: 'text/plain' }) });
-
-            navigator.clipboard.write([textData])
-                .then(() => {
-                    console.log('所有文本已成功复制到剪贴板', text);
-                    if (cb) cb(true)
-                    tempDiv.remove()
-                })
-                .catch((error) => {
-                    console.error('复制到剪贴板失败:', error);
-                    if (cb) cb(false)
-                    tempDiv.remove()
-                });
-        }
 
 
         // const htmlString = "<p>这是要复制的HTML内容</p><img src='url'><img src='url'>";
-        // copyImagesToClipboard(htmlString);
+        // Command.copyImagesToClipboard(htmlString);
 
 
         // 上传音频转为base64
@@ -1706,14 +1411,10 @@
             inputData = inputData.filter(inp => inp);
             // console.log('inputData',inputData)
             inputData.forEach(async data => {
-                console.log('inputData', data);
+                // console.log('inputData', data);
 
                 // 图片 or 视频输入
-
-                if (["LoadImage",
-                    "VHS_LoadVideo",
-                    "ImagesPrompt_",
-                    "LoadImagesToBatch"].includes(data.class_type)) {
+                if (Command._imageNodes.includes(data.class_type)) {
 
                     let isVideoUpload = data.class_type === "VHS_LoadVideo";
 
@@ -1734,8 +1435,13 @@
 
                     // Create an input field for the image name
                     const uploadImageInput = document.createElement("button");
-                    uploadImageInput.style = `width: 88px;`;
-                    uploadImageInput.innerText = 'upload'
+                    uploadImageInput.style = `width: 56px; min-width: 56px !important`;
+                    uploadImageInput.title = 'Upload image'; // 悬浮提示
+                    uploadImageInput.className = "icon_btn";
+
+                    // 添加 SVG 图标
+                    uploadImageInput.innerHTML = uploadImageIcon;
+
                     const uploadImageInputHide = document.createElement('input');
                     uploadImageInputHide.type = "file";
                     uploadImageInputHide.style.display = "none"
@@ -1743,14 +1449,24 @@
                     actionDiv.appendChild(uploadImageInputHide);
 
                     const btnFromClipboard = document.createElement("button");
-                    btnFromClipboard.style = `width: 156px; margin-left: 18px;`
-                    btnFromClipboard.innerText = 'paste from clipboard'
+                    btnFromClipboard.style = `width: 56px;min-width:56px!important; margin-left: 12px;`
+                    btnFromClipboard.title = 'Paste from clipboard'; // 悬浮提示
+                    btnFromClipboard.className = "icon_btn";
+                    btnFromClipboard.innerHTML = clipboardIcon;
+
+
                     if (!isVideoUpload) actionDiv.appendChild(btnFromClipboard);
 
                     const btnForImageEdit = document.createElement("button");
                     btnForImageEdit.style = ` width: 32px; background: none;margin-left: 18px;`
-                    btnForImageEdit.innerHTML = '<?xml version="1.0" ?><svg version="1.1" style="width: 24px;" viewBox="0 0 50 50" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="Layer_1_1_"><path d="M18.293,31.707h6.414l24-24l-6.414-6.414l-24,24V31.707z M45.879,7.707l-3.586,3.586l-3.586-3.586l3.586-3.586   L45.879,7.707z M20.293,26.121l17-17l3.586,3.586l-17,17h-3.586V26.121z"/><polygon points="43.293,19.707 41.293,19.707 41.293,46.707 3.293,46.707 3.293,8.707 31.293,8.707 31.293,6.707 1.293,6.707    1.293,48.707 43.293,48.707  "/></g></svg>'
-                    if ((!isVideoUpload && !isBase64Upload) && data.class_type !== 'ImagesPrompt_') actionDiv.appendChild(btnForImageEdit);
+                    btnForImageEdit.className = "icon_btn";
+                    btnForImageEdit.innerHTML = editIcon;
+                    // mask有输出，才有编辑mask功能
+                    if (!isVideoUpload
+                        && !isBase64Upload
+                        && data.class_type !== 'ImagesPrompt_'
+                        && data.options.hasMask
+                    ) actionDiv.appendChild(btnForImageEdit);
 
 
                     uploadContainer.appendChild(actionDiv)
@@ -1767,7 +1483,7 @@
                             subfolder = "";
                             name = data.inputs.video;
                         }
-                        let url = `${get_url()}/view?filename=${encodeURIComponent(name)}&type=input&subfolder=${subfolder}&rand=${Math.random()}`
+                        let url = `${Command.get_url()}/view?filename=${encodeURIComponent(name)}&type=input&subfolder=${subfolder}&rand=${Math.random()}`
                         imageElement.src = url;
 
                         // imageElement.innerHTML=`<img src="${base64Df}"/>`
@@ -1780,7 +1496,7 @@
                             name = data.inputs.image;
                         }
                         // imageElement.src = base64Df
-                        let url = `${get_url()}/view?filename=${encodeURIComponent(name)}&type=input&subfolder=${subfolder}&rand=${Math.random()}`
+                        let url = `${Command.get_url()}/view?filename=${encodeURIComponent(name)}&type=input&subfolder=${subfolder}&rand=${Math.random()}`
                         // 如果有默认图                        
                         imageElement.src = data.options?.defaultImage || url;
                         imageElement.setAttribute('onerror', `this.src='${base64Df}'`)
@@ -1792,11 +1508,26 @@
                             data.options.images,
                             data.inputs.imageIndex,
                             (base64, text) => {
-                                window._appData.data[data.id].inputs.image_base64 = base64;
-                                window._appData.data[data.id].inputs.text = text;
+                                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image_base64 = base64;
+                                if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.text = text;
+
+                                //更新输入参数
+                                updateInputData(data.id, (inputs) => {
+                                    inputs.image_base64 = base64;
+                                    inputs.text = text;
+                                    return inputs
+                                })
+
                             })
                         uploadContainer.appendChild(imgDiv);
-                        window._appData.data[data.id].inputs.image_base64 = mainImage.querySelector('.images_prompt_main').src;
+                        if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image_base64 = mainImage.querySelector('.images_prompt_main').src;
+
+                        //更新输入参数
+                        updateInputData(data.id, (inputs) => {
+                            inputs.image_base64 = mainImage.querySelector('.images_prompt_main').src;
+                            return inputs
+                        })
+
                     } else if (data.class_type === 'LoadImagesToBatch') {
                         // 多张base64 图片
                         let base64 = data.inputs.images.base64
@@ -1834,23 +1565,31 @@
                             // 获取读取的文件内容，即 Blob 对象
                             const fileBlob = new Blob([reader.result], { type: file.type });
                             // console.log( file.type.split('/')[1])
-                            let hashId = await calculateImageHash(fileBlob)
+                            let hashId = await Command.calculateImageHash(fileBlob)
 
-                            if (hashId == window._appData.data[data.id].hashId) return
+                            if (window._appData.data && hashId == window._appData.data[data.id].hashId) return
 
                             if (data.class_type === 'LoadImagesToBatch') {
                                 // 上传 ，转为base64
-                                let base64 = await blobToBase64(fileBlob)
+                                let base64 = await Command.blobToBase64(fileBlob)
                                 createBase64ImageForLoadImageToBatch(imageElement, data.id, base64)
                             } else {
                                 //上传，返回url
-                                let { url, name } = await uploadImage(fileBlob, '.' + file.type.split('/')[1])
+                                let { url, name } = await Command.uploadImage(fileBlob, '.' + file.type.split('/')[1])
 
-                                let base64 = await parseImageToBase64(url);
+                                let base64 = await Command.parseImageToBase64(url);
 
                                 if (data.class_type === 'ImagesPrompt_') {
-                                    uploadContainer.querySelector('.images_prompt_main').src = base64
-                                    window._appData.data[data.id].inputs.image_base64 = base64;
+                                    uploadContainer.querySelector('.images_prompt_main').src = base64;
+
+                                    if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image_base64 = base64;
+
+                                    //更新输入参数
+                                    updateInputData(data.id, (inputs) => {
+                                        inputs.image_base64 = base64;
+                                        return inputs
+                                    })
+
                                 } else {
                                     if (isVideoUpload) {
                                         imageElement.srcObject = null;
@@ -1859,7 +1598,14 @@
                                     imageElement.src = url;
 
                                     if (isVideoUpload) {
-                                        window._appData.data[data.id].inputs.video = name;
+                                        if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.video = name;
+
+                                        //更新输入参数
+                                        updateInputData(data.id, (inputs) => {
+                                            inputs.video = name;
+                                            return inputs
+                                        })
+
                                     } else {
                                         //更换option里的default image
                                         window._appData.input = Array.from(window._appData.input, inp => {
@@ -1869,13 +1615,19 @@
                                             return inp
                                         })
 
-                                        window._appData.data[data.id].inputs.image = name;
+                                        if (window._appData.data && window._appData.data[data.id]) window._appData.data[data.id].inputs.image = name;
+                                        //更新输入参数
+                                        updateInputData(data.id, (inputs) => {
+                                            inputs.image = name;
+                                            return inputs
+                                        })
+
                                     }
 
                                 }
 
 
-                                window._appData.data[data.id].hashId = hashId;
+                                if (window._appData.data) window._appData.data[data.id].hashId = hashId;
 
                                 console.log("上传的文件：", url, data.id, name);
                             }
@@ -1890,15 +1642,21 @@
 
                     })
 
-                    // imageElement.src = `${get_url()}/view?filename=${encodeURIComponent(data.inputs.image)}&type=${type}&subfolder=${subfolder}`;
-                    if (data.class_type !== 'ImagesPrompt_') uploadContainer.appendChild(imageElement);
+                    // imageElement.src = `${Command.get_url()}/view?filename=${encodeURIComponent(data.inputs.image)}&type=${type}&subfolder=${subfolder}`;
+                    if (data.class_type !== 'ImagesPrompt_') {
+                        //增加div，用于放背景
+                        let imageGrid = document.createElement('div');
+                        imageGrid.className = "image-with-grid"
+                        imageGrid.appendChild(imageElement);
+                        uploadContainer.appendChild(imageGrid);
+                    }
 
                     // Append the upload container to the main container
                     container.appendChild(uploadContainer);
                 }
 
                 // 滑块输入
-                if (["PromptSlide"].includes(data.class_type)) {
+                if (Command._slideNodes.includes(data.class_type)) {
                     // 滑块输入
                     let options = data.options || {
                         min: -3,
@@ -1915,7 +1673,12 @@
                     let silde = createNumSlide(label,
                         data.inputs.weight,
                         (v) => {
-                            window._appData.data[data.id].inputs.weight = parseFloat(v);
+                            if (window._appData.data) window._appData.data[data.id].inputs.weight = parseFloat(v);
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.weight = parseFloat(v);
+                                return inputs
+                            })
                         },
                         options.min,
                         options.max,
@@ -1928,7 +1691,7 @@
 
 
                 // 数字输入支持
-                if (['FloatSlider', 'IntNumber'].includes(data.class_type)) {
+                if (Command._numberNodes.includes(data.class_type)) {
                     // console.log('data.options',data.options)
                     // 滑块输入
                     let options = data.options || {
@@ -1939,7 +1702,14 @@
                         data.inputs.number,
                         (v) => {
                             // console.log(data.id,window._appData.data[data.id])
-                            window._appData.data[data.id].inputs.number = data.class_type === 'IntNumber' ? parseInt(v) : parseFloat(v);
+                            if (window._appData.data) window._appData.data[data.id].inputs.number = data.class_type === 'IntNumber' ? parseInt(v) : parseFloat(v);
+
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.number = data.class_type === 'IntNumber' ? parseInt(v) : parseFloat(v);
+                                return inputs
+                            })
+
                         },
                         options.min,
                         options.max,
@@ -1951,7 +1721,7 @@
                 }
 
                 // 文本输入支持
-                if (["TextInput_", "CLIPTextEncode", "PromptSimplification", "ChinesePrompt_Mix"].includes(data.class_type)) {
+                if (Command._textNodes.includes(data.class_type)) {
                     // Create a container for the upload control
                     const uploadContainer = document.createElement("div");
                     uploadContainer.className = 'card';
@@ -1963,6 +1733,7 @@
 
                     // Create an input field for the image name
                     const textInput = document.createElement("textarea");
+                    textInput.id = `input_node_id_${data.id}`
                     // textInput.className=;
                     if (data.class_type == "PromptSimplification") {
                         textInput.value = data.inputs.prompt;
@@ -1979,9 +1750,21 @@
                         textInput.style.height = height;
 
                         if (data.class_type == "PromptSimplification") {
-                            window._appData.data[data.id].inputs.prompt = textInput.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.prompt = textInput.value;
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.prompt = textInput.value;
+                                return inputs
+                            })
                         } else {
-                            window._appData.data[data.id].inputs.text = textInput.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.text = textInput.value;
+
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.text = textInput.value;
+                                return inputs
+                            })
+
                         }
 
                     } catch (error) {
@@ -1991,25 +1774,6 @@
                     uploadContainer.appendChild(textInput);
                     // autoResize(textInput);
 
-
-                    //动态提示功能
-                    const dynamicPromptsBtn = document.createElement('button');
-                    dynamicPromptsBtn.className = "dynamic_prompt"
-                    dynamicPromptsBtn.innerText = 'dynamic';
-                    dynamicPromptsBtn.style.width = '88px'
-                    uploadContainer.appendChild(dynamicPromptsBtn);
-                    dynamicPromptsBtn.addEventListener('click', e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        let prompt = dynamicPrompts(textInput.value)
-                        textInput.setAttribute('title', prompt)
-                        dynamicPromptsBtn.setAttribute('title', prompt)
-                        if (data.class_type == "PromptSimplification") {
-                            window._appData.data[data.id].inputs.prompt = prompt;
-                        } else {
-                            window._appData.data[data.id].inputs.text = prompt;
-                        }
-                    })
 
 
                     function autoResize(textarea) {
@@ -2022,9 +1786,19 @@
                         autoResize(textInput);
 
                         if (data.class_type == "PromptSimplification") {
-                            window._appData.data[data.id].inputs.prompt = textInput.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.prompt = textInput.value;
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.prompt = textInput.value;
+                                return inputs
+                            })
                         } else {
-                            window._appData.data[data.id].inputs.text = textInput.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.text = textInput.value;
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.text = textInput.value;
+                                return inputs
+                            })
                         }
                         localStorage.setItem(`t_${data.id}`, JSON.stringify({
                             value: textInput.value,
@@ -2037,9 +1811,8 @@
                 }
 
                 // lora的输入支持
-                if (["CheckpointLoaderSimple", "LoraLoader"].includes(data.class_type)) {
+                if (Command._loraNodes.includes(data.class_type)) {
                     let value = data.inputs.ckpt_name || data.inputs.lora_name;
-
 
                     try {
                         let t = '';
@@ -2049,7 +1822,7 @@
                             t = 'loras'
                         }
                         if (t) {
-                            const response = await fetch(`${get_url()}/mixlab/folder_paths`, {
+                            const response = await fetch(`${Command.get_url()}/mixlab/folder_paths`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -2071,10 +1844,24 @@
                         if (v) {
                             value = v;
                             if (data.class_type === 'CheckpointLoaderSimple') {
-                                window._appData.data[data.id].inputs.ckpt_name = value;
+
+                                if (window._appData.data) window._appData.data[data.id].inputs.ckpt_name = value;
+                                //更新输入参数
+                                updateInputData(data.id, (inputs) => {
+                                    inputs.ckpt_name = value;
+                                    return inputs
+                                })
+
                             }
                             if (data.class_type === 'LoraLoader') {
-                                window._appData.data[data.id].inputs.lora_name = value;
+
+                                if (window._appData.data) window._appData.data[data.id].inputs.lora_name = value;
+                                //更新输入参数
+                                updateInputData(data.id, (inputs) => {
+                                    inputs.lora_name = value;
+                                    return inputs
+                                })
+
                             }
                         }
                     } catch (error) {
@@ -2094,10 +1881,20 @@
                         e.preventDefault();
                         // console.log(selectDom.value)
                         if (data.class_type === 'CheckpointLoaderSimple') {
-                            window._appData.data[data.id].inputs.ckpt_name = selectDom.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.ckpt_name = selectDom.value;
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.ckpt_name = selectDom.value;
+                                return inputs
+                            })
                         }
                         if (data.class_type === 'LoraLoader') {
-                            window._appData.data[data.id].inputs.lora_name = selectDom.value;
+                            if (window._appData.data) window._appData.data[data.id].inputs.lora_name = selectDom.value;
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.lora_name = selectDom.value;
+                                return inputs
+                            })
                         }
 
                         localStorage.setItem(`_model_${data.id}_${data.class_type}`, selectDom.value)
@@ -2107,7 +1904,7 @@
                 }
 
                 // 色彩选择器
-                if (["Color"].includes(data.class_type)) {
+                if (Command._colorNodes.includes(data.class_type)) {
                     let value = data.inputs.color.hex || '#000000';
                     let d = document.createElement('div');
                     d.className = 'card';
@@ -2128,7 +1925,7 @@
                 }
 
                 // 加载音频 base64
-                if (['LoadAndCombinedAudio_'].includes(data.class_type)) {
+                if (Command._audioNodes.includes(data.class_type)) {
                     let inpAudio = document.createElement('div');
 
                     let inputAudio = document.createElement('button');
@@ -2161,7 +1958,15 @@
 
                             audioE.src = base64;
 
-                            window._appData.data[data.id].inputs.audios.base64 = [base64];
+                            if (window._appData.data) window._appData.data[data.id].inputs.audios.base64 = [base64];
+
+                            //更新输入参数
+                            updateInputData(data.id, (inputs) => {
+                                inputs.audios.base64 = [base64];
+                                return inputs
+                            })
+
+
                         })
 
                         inp.click()
@@ -2225,11 +2030,26 @@
                         // console.log(color)
                         // window._appData.data[data.id].inputs.color.hex = color.toHEXA().toString();
                         let [r, g, b, a] = color.toRGBA();
-                        window._appData.data[nodeId].inputs.color = {
-                            ...window._appData.data[nodeId].inputs.color,
+                        r = parseInt(r);
+                        g = parseInt(g);
+                        b = parseInt(b);
+
+                        if (window._appData.data) window._appData.data[nodeId].inputs.color = {
+                            // ...window._appData.data[nodeId].inputs.color,
                             r, g, b, a,
                             hex: color.toHEXA().toString()
-                        }
+                        };
+
+                        //更新输入参数 //todo color里的参数
+                        updateInputData(nodeId, (inputs) => {
+                            inputs.color = {
+                                // ...window._appData.data[nodeId].inputs.color,
+                                r, g, b, a,
+                                hex: color.toHEXA().toString()
+                            };
+                            return inputs
+                        })
+
                     } catch (error) { }
                 })
                 .on('cancel', instance => {
@@ -2308,7 +2128,14 @@
 
                 let defaultValue = (targetId ? localStorage.getItem(`_slide_${targetId}`) : '') || keywords[0];
 
-                window._appData.data[targetId].inputs.prompt_keyword = defaultValue;
+                if (window._appData.data) window._appData.data[targetId].inputs.prompt_keyword = defaultValue;
+
+                //更新输入参数 //todo color里的参数
+                updateInputData(targetId, (inputs) => {
+                    inputs.prompt_keyword = defaultValue;
+                    return inputs
+                })
+
 
                 let selectTag = createSelect(Array.from(keywords, (k, i) => {
                     return {
@@ -2325,7 +2152,13 @@
                 // selectTag.setAttribute('data-content',labelText);
                 selectTag.addEventListener('change', e => {
                     e.preventDefault();
-                    window._appData.data[targetId].inputs.prompt_keyword = selectTag.value;
+                    if (window._appData.data) window._appData.data[targetId].inputs.prompt_keyword = selectTag.value;
+
+                    //更新输入参数 //todo color里的参数
+                    updateInputData(targetId, (inputs) => {
+                        inputs.prompt_keyword = selectTag.value;
+                        return inputs
+                    })
 
                     targetId ? localStorage.setItem(`_slide_${targetId}`, selectTag.value) : ''
                 })
@@ -2427,7 +2260,7 @@
                     mainImg.querySelector('img').src = opt.imgurl;
                     if (callback) {
                         if (!opt.imgurl.match('data:image')) {
-                            opt.imgurl = await parseImageToBase64(opt.imgurl)
+                            opt.imgurl = await Command.parseImageToBase64(opt.imgurl)
                         }
                         callback(opt.imgurl, opt.keyword);
                     }
@@ -2476,114 +2309,93 @@
             return [div, selectElement];
         }
 
-        function getFilenameAndCategoryFromUrl(url) {
-            const queryString = url.split('?')[1];
-            if (!queryString) {
-                return {};
-            }
-
-            const params = new URLSearchParams(queryString);
-
-            const filename = params.get('filename') ? decodeURIComponent(params.get('filename')) : null;
-            const category = params.get('category') ? decodeURIComponent(params.get('category') || '') : '';
-
-            return { category, filename };
-        }
-
-        function createImage(url) {
-            let im = new Image()
-            return new Promise((res, rej) => {
-                im.onload = () => res(im)
-                im.src = url
-            })
-        }
 
         async function createUI(data, share = true) {
             // appData.input, appData.output, appData.seed, share, appData.link
             if (!data) return
+            // console.log('#createUI', data)
             const { input: inputData, output: outputData, data: workflow, seed, seedTitle, link, name } = data;
 
-            let mainDiv = document.createElement('div');
 
             if (document.body.querySelector('#app_container')) document.body.querySelector('#app_container').remove()
-            let appDetails = document.createElement('details');
-            appDetails.id = "app_container"
-            appDetails.setAttribute('open', true)
-            appDetails.innerHTML = `<summary>${name}</summary>`;
-            appDetails.style = `background: whitesmoke;
-            color: black;
-            padding: 12px;
-            cursor: pointer;
-            margin: 8px 44px;`
-
-
-            let leftDetails = document.createElement('details');
-            leftDetails.setAttribute('open', 'true')
-            leftDetails.id = 'app_input_pannel'
-            leftDetails.innerHTML = `<summary>INPUT</summary>
-                <div class="content"></div>`
-
-            let leftDiv = leftDetails.querySelector('.content');
-            let rightDiv = document.createElement('div');
-
-            mainDiv.className = 'app'
-            leftDiv.className = 'panel'
-            leftDiv.style.alignItems = 'flex-start';
-            rightDiv.className = 'panel'
-            leftDiv.style.flex = 0.4
-            rightDiv.style.flex = 1;
-            // rightDiv.style.height='70vh'
-            //         rightDiv.style=`position: fixed;
-            // right: 0;
-            // top: 12px;flex:0.6`
-
+            if (document.body.querySelector('#workflow_submit_pannel')) document.body.querySelector('#workflow_submit_pannel').remove()
             // 创建标题
-            let titleDiv = document.createElement('div');
-            titleDiv.className = 'header'
+            // let titleDiv = document.createElement('div');
+            // titleDiv.className = 'header'
 
-            var title = document.createElement('h1');
-            title.textContent = 'My Application';
-            titleDiv.appendChild(title);
+            // var title = document.createElement('h1');
+            // title.textContent = 'My Application';
+            // titleDiv.appendChild(title);
 
-            if (share) {
-                const shareBtn = document.createElement('button');
-                shareBtn.innerText = 'copy url';
-                shareBtn.addEventListener('click', e => {
-                    e.preventDefault();
-                    let url = `${get_url()}/mixlab/app?filename=${encodeURIComponent(window._appData.filename)}&category=${encodeURIComponent(window._appData.category || '')}`;
-                    copyTextToClipboard(url, success(e, shareBtn, 'copy url'));
-                })
+            // if (share) {
+            //     const shareBtn = document.createElement('button');
+            //     shareBtn.innerText = 'copy url';
+            //     shareBtn.addEventListener('click', e => {
+            //         e.preventDefault();
+            //         let url = `${Command.get_url()}/mixlab/app?filename=${encodeURIComponent(window._appData.filename)}&category=${encodeURIComponent(window._appData.category || '')}`;
+            //         Command.copyTextToClipboard(url, Command.success(e, shareBtn, 'copy url'));
+            //     })
 
-                titleDiv.appendChild(shareBtn);
-            }
+            //     titleDiv.appendChild(shareBtn);
+            // }
 
 
 
-            let iconDes = document.createElement('div');
-            // 创建应用图标
-            var icon = document.createElement('img');
-            icon.style.width = '48px';
-            // icon.style.height = '98px';
-            icon.src = base64Df;
+            // let iconDes = document.createElement('div');
+            // // 创建应用图标
+            // var icon = document.createElement('img');
+            // icon.style.width = '48px';
+            // // icon.style.height = '98px';
+            // icon.src = base64Df;
 
-            var des = document.createElement('p');
-            des.style = `margin-left: 12px; font-size: 14px;`
-            iconDes.appendChild(icon)
-            iconDes.appendChild(des);
-            iconDes.className = 'description'
+            // var des = document.createElement('p');
+            // des.style = `margin-left: 12px; font-size: 14px;`
+            // iconDes.appendChild(icon)
+            // iconDes.appendChild(des);
+            // iconDes.className = 'description'
 
-            // 创建状态标签
-            let statusDiv = document.createElement('div');
-            statusDiv.className = 'status_seed'
-            var status = document.createElement('div');
-            status.textContent = 'Status';
-            status.className = 'status';
+
+            // *********** 输入面板 - 提交面板 合并 ：
+            // 输入、参数控制、状态、提交
+
+            // 创建输入框
+            const input1 = createInputs(inputData)
+
+            let inputDetailsCard = document.createElement('div');
+            inputDetailsCard.className = 'detail_parent';
+
+            inputDetailsCard.innerHTML = `
+                <details 
+                open="true" 
+                id="app_input_pannel" 
+                class= "detail" 
+                > 
+                <summary>INPUT</summary> 
+                <div class="content"></div>
+                </details>
+            `;
+
+            inputDetailsCard.querySelector('details').addEventListener('toggle', e => {
+                e.preventDefault();
+                document.body.querySelector('.app')?.classList.toggle("max_view")
+            })
+
+
+            let inputCards = inputDetailsCard.querySelector('.content');
+            inputCards.className = 'panel'
+            inputCards.style.alignItems = 'flex-start';
+            inputCards.style.flex = 0.4
+
+            inputCards.appendChild(input1);
+
+            // 创建参数控制
+            let ksamplerCard = document.createElement('div');
+            ksamplerCard.className = 'detail_parent'
 
             // seed 汇总
-            var seeds = document.createElement('details');
-            // seeds.textContent = 'Status';
-            seeds.className = 'seeds';
+            const seeds = document.createElement('details');
 
+            seeds.className = 'seeds detail';
             try {
                 if (Object.keys(seed).length > 0) {
                     seeds.innerHTML = `<summary>SEED</summary>
@@ -2591,7 +2403,8 @@
                     const content = seeds.querySelector('.content')
                     for (const id in seed) {
                         const s = seed[id];
-                        if (!Array.isArray(workflow[id].inputs.seed)) {
+                        console.log('#createUI', !!(workflow && !Array.isArray(workflow[id].inputs.seed) || !workflow))
+                        if (!!(workflow && !Array.isArray(workflow[id].inputs.seed) || !workflow)) {
 
                             let seedInput = document.createElement('div');
                             content.appendChild(seedInput)
@@ -2630,88 +2443,138 @@
 
                         }
 
-
                     }
                 }
 
             } catch (error) {
                 console.log(error)
             }
+            // ksamplerCard.appendChild(status);
+            ksamplerCard.appendChild(seeds);
+
+            // 动态组合和批量组合
+            const promptLab = document.createElement('details');
+            promptLab.className = 'prompt_lab detail';
+
+            //判断是否有 
+            let isPromptLab = false;
+            for (const node of window._appData.input) {
+                if (Command._textNodes.includes(node.class_type)) isPromptLab = true;
+            }
+
+            if (isPromptLab) {
+                promptLab.innerHTML = `<summary>Prompt Lab</summary>
+                <div class="content"> </div>
+                `
+                const content = promptLab.querySelector('.content');
+                //动态提示功能
+                const dynamicPromptsBtn = document.createElement('button');
+                dynamicPromptsBtn.id = "dynamic_prompt"
+                dynamicPromptsBtn.className = "mix_on"
+                dynamicPromptsBtn.innerText = 'dynamic';
+                dynamicPromptsBtn.style.width = '88px'
+                content.appendChild(dynamicPromptsBtn);
+                dynamicPromptsBtn.addEventListener('click', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dynamicPromptsBtn.classList.toggle("mix_on")
+                    if (dynamicPromptsBtn.classList.contains('mix_on')) {
+                        batchPromptsBtn.classList.remove("mix_on")
+                    }
+                })
 
 
-            // statusDiv.appendChild(status);
-            statusDiv.appendChild(seeds);
+                //批量提示功能
+                const batchPromptsBtn = document.createElement('button');
+                batchPromptsBtn.id = "batch_prompt"
+                batchPromptsBtn.innerText = 'batch';
+                batchPromptsBtn.style.width = '88px'
+                content.appendChild(batchPromptsBtn);
+                batchPromptsBtn.addEventListener('click', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    batchPromptsBtn.classList.toggle("mix_on")
+                    if (batchPromptsBtn.classList.contains('mix_on')) {
+                        dynamicPromptsBtn.classList.remove("mix_on")
+                    }
+                })
 
-            // 创建输入框
-            var input1 = createInputs(inputData)
 
-            var output = await createOutputs(outputData, link)
+                ksamplerCard.appendChild(promptLab);
+            };
 
-            // 创建提交按钮
+
+            // 运行状态
+            const appStatus = document.createElement('div');
+            appStatus.textContent = 'Status';
+            appStatus.className = 'status';
+
+            // 底部的运行状态和提交按钮
             let submitDiv = document.createElement('div');
-            submitDiv.appendChild(statusDiv);
+            submitDiv.className = "submit_div"
 
-            let submitDivBtn = document.createElement('div');
-            submitDivBtn.style.display = 'flex'
-            submitDiv.appendChild(submitDivBtn);
 
-            submitDivBtn.appendChild(status);
+            submitDiv.appendChild(appStatus);
 
-            submitDiv.className = 'run_div';
-            var submitButton = document.createElement('button');
-            submitButton.textContent = 'Create';
-            submitButton.className = 'run_btn'
+            const promptButton = document.createElement('button');
+            promptButton.textContent = 'Create';
+            promptButton.className = 'main_btn'
 
-            // 将所有UI元素添加到页面中
-            // leftDiv.appendChild(titleDiv);
-            // leftDiv.appendChild(iconDes);
-            // leftDiv.appendChild(des);
-            // leftDiv.appendChild(statusDiv);
-            leftDiv.appendChild(input1);
+            submitDiv.appendChild(promptButton);
 
-            submitDivBtn.appendChild(submitButton);
-            if (typeof (data.data) == 'object') mainDiv.appendChild(submitDiv);
+            // 创建输入和提交面板
+            let workflowSubmitPannel = document.createElement('div');
+            workflowSubmitPannel.id = 'workflow_submit_pannel';
 
-            rightDiv.appendChild(output);
+            workflowSubmitPannel.appendChild(inputDetailsCard);
+            workflowSubmitPannel.appendChild(ksamplerCard);
+            workflowSubmitPannel.appendChild(submitDiv);
 
-            // mainDiv.appendChild(titleDiv);
-            // mainDiv.appendChild(iconDes);
+            document.body.appendChild(workflowSubmitPannel);
 
-            mainDiv.appendChild(leftDetails);
-            mainDiv.appendChild(rightDiv);
 
-            appDetails.appendChild(mainDiv);
-            document.body.appendChild(appDetails)
+            // 创建输出
+            const output = await createOutputs(outputData, link);
+            let outputCards = document.createElement('div');
+            outputCards.className = 'panel'
 
-            appDetails.addEventListener('toggle', e => {
-                e.preventDefault();
-                document.body.querySelector('#author').style.display = appDetails.open ? 'flex' : 'none'
-            })
+            outputCards.appendChild(output);
+
+
+            // app结果输出
+            let currentAppOutput = document.createElement('div');
+            currentAppOutput.className = 'app'
+            // currentAppOutput.appendChild(titleDiv);
+            // currentAppOutput.appendChild(iconDes);
+            currentAppOutput.appendChild(outputCards);
+
+            document.body.appendChild(currentAppOutput)
+
 
             // 返回每个UI元素的引用和对应的更新方法
             return {
-                title: {
-                    element: title,
-                    update: function (newTitle) {
-                        title.textContent = newTitle;
-                    }
-                },
-                icon: {
-                    element: icon,
-                    update: function (newIconPath) {
-                        icon.src = newIconPath;
-                    }
-                },
-                des: {
-                    element: des,
-                    update: function (text) {
-                        des.textContent = text;
-                    }
-                },
+                // title: {
+                //     element: title,
+                //     update: function (newTitle) {
+                //         title.textContent = newTitle;
+                //     }
+                // },
+                // icon: {
+                //     element: icon,
+                //     update: function (newIconPath) {
+                //         icon.src = newIconPath;
+                //     }
+                // },
+                // des: {
+                //     element: des,
+                //     update: function (text) {
+                //         des.textContent = text;
+                //     }
+                // },
                 status: {
                     element: status,
                     update: function (newStatus) {
-                        status.textContent = newStatus;
+                        appStatus.textContent = newStatus;
                     }
                 },
                 input1: {
@@ -2726,7 +2589,7 @@
                         console.log(val, id)
                         if (val && type == "image" && output.querySelector(`#output_${id} img`)) {
 
-                            let im = await createImage(val)
+                            let im = await Command.createImage(val)
 
                             output.querySelector(`#output_${id} img`).src = val;
 
@@ -2755,7 +2618,7 @@
                                     prompt = v[1];
                                 }
 
-                                let im = await createImage(url);
+                                let im = await Command.createImage(url);
 
                                 // 构建新的
                                 let a = document.createElement('a');
@@ -2855,44 +2718,44 @@
                         }
                     }
                 },
-                submitButton: {
-                    element: submitButton,
+                promptButton: {
+                    element: promptButton,
                     update: function (runFn, cancelFn) {
-                        submitButton.addEventListener('dblclick', (e) => {
+                        promptButton.addEventListener('dblclick', (e) => {
                             e.preventDefault()
-                            submitButton.classList.remove('disabled');
+                            promptButton.classList.remove('disabled');
                         });
-                        submitButton.addEventListener('click', (e) => {
+                        promptButton.addEventListener('click', (e) => {
                             e.preventDefault();
 
-                            if (submitButton.classList.contains('data-click')) {
+                            if (promptButton.classList.contains('data-click')) {
                                 return
                             } else {
-                                submitButton.classList.add('data-click')
-                                setTimeout(() => submitButton.classList.remove('data-click'), 500)
+                                promptButton.classList.add('data-click')
+                                setTimeout(() => promptButton.classList.remove('data-click'), 500)
                             }
 
-                            if (!submitButton.classList.contains('disabled')) {
+                            if (!promptButton.classList.contains('disabled')) {
                                 runFn && runFn();
-                                submitButton.classList.add('disabled');
-                                submitButton.innerText = 'Cancel'
+                                promptButton.classList.add('disabled');
+                                promptButton.innerText = 'Cancel'
                             } else {
                                 // 如果能取消
                                 let canCancel = cancelFn && cancelFn();
-                                if (canCancel) submitButton.classList.remove('disabled');
-                                if (canCancel) submitButton.innerText = 'Create';
+                                if (canCancel) promptButton.classList.remove('disabled');
+                                if (canCancel) promptButton.innerText = 'Create';
                             }
 
                         });
                     },
                     running: () => {
-                        submitButton.innerText = 'Cancel';
-                        if (!submitButton.classList.contains('disabled')) submitButton.classList.add('disabled');
+                        promptButton.innerText = 'Cancel';
+                        if (!promptButton.classList.contains('disabled')) promptButton.classList.add('disabled');
                     },
                     reset: () => {
-                        submitButton.innerText = 'Create';
-                        submitButton.classList.remove('disabled');
-                        submitButton.classList.remove('data-click');
+                        promptButton.innerText = 'Create';
+                        promptButton.classList.remove('disabled');
+                        promptButton.classList.remove('data-click');
                     }
                 },
             };
@@ -2952,7 +2815,7 @@
                 // 保存结果到记录里
                 window.prompt_ids[detail.prompt_id].data = detail
                 window.prompt_ids[detail.prompt_id].createTime = (new Date()).getTime()
-                savePromptResult({
+                Command.savePromptResult({
                     ...window.prompt_ids[detail.prompt_id],
                     prompt_id: detail.prompt_id
                 })
@@ -2974,7 +2837,7 @@
             if (images) {
                 // if (!images) return;
 
-                let url = get_url();
+                let url = Command.get_url();
 
                 show(Array.from(images, img => {
                     return `${url}/view?filename=${encodeURIComponent(img.filename)}&type=${img.type}&subfolder=${encodeURIComponent(img.subfolder)}&t=${+new Date()}`;
@@ -2982,14 +2845,14 @@
 
             } else if (meshes) {
                 //多个
-                let url = get_url();
+                let url = Command.get_url();
 
                 show(Array.from(meshes, mesh => {
                     return `${url}/view?filename=${encodeURIComponent(mesh.filename)}&type=${mesh.type}&subfolder=${encodeURIComponent(mesh.subfolder)}&t=${+new Date()}`;
                 }), detail.node, 'meshes');
 
             } else if (_images && prompts) {
-                let url = get_url();
+                let url = Command.get_url();
 
                 let items = [];
                 // 支持图片的batch
@@ -3009,7 +2872,7 @@
                 show(Array.isArray(text) ? text.join('\n\n') : text, detail.node, 'text')
             } else if (gifs && gifs[0]) {
                 // if (!images) return; 
-                const src = `${get_url()}/view?filename=${encodeURIComponent(gifs[0].filename)}&type=${gifs[0].type}&subfolder=${encodeURIComponent(gifs[0].subfolder)
+                const src = `${Command.get_url()}/view?filename=${encodeURIComponent(gifs[0].filename)}&type=${gifs[0].type}&subfolder=${encodeURIComponent(gifs[0].subfolder)
                     }&&format=${gifs[0].format}&t=${+new Date()}`;
 
                 show(src, detail.node, gifs[0].format.match('video') ? 'video' : 'image');
@@ -3025,29 +2888,184 @@
             // console.log(appData)
             // 使用示例：
             var ui = await createUI(appData, share);
-
+            if (!ui) return
             // 更新标题
-            ui.title.update(appData.name || 'Mixlab APP');
+            ui.title?.update(appData.name || 'Mixlab APP');
 
             // 更新应用图标
-            ui.icon.update(appData.icon || appData.output[0]?.options?.defaultImage || base64Df);
+            ui.icon?.update(appData.icon || appData.output[0]?.options?.defaultImage || base64Df);
 
-            ui.des.update(appData.description || '-');
+            ui.des?.update(appData.description || '-');
 
             // 更新状态标签
             ui.status.update(appData ? 'READY' : '-');
 
             // 添加提交按钮点击事件
-            ui.submitButton.update(
+            ui.promptButton.update(
                 () => {
                     // 在提交按钮点击时执行的逻辑
-                    queuePrompt({
-                        name: window._appData.name,
-                        id: window._appData.id,
-                        icon: window._appData.icon,
-                        category: window._appData.category,
-                        filename: window._appData.filename
-                    }, window._appData.data, window._appData.seed, api.clientId);
+                    // queuePrompt({
+                    //     name: window._appData.name,
+                    //     id: window._appData.id,
+                    //     icon: window._appData.icon,
+                    //     category: window._appData.category,
+                    //     filename: window._appData.filename
+                    // }, window._appData.data, window._appData.seed, api.clientId);
+
+                    //动态提示和批量提示功能
+
+                    let isPromptLab = false;
+                    for (const node of window._appData.input) {
+                        if (Command._textNodes.includes(node.class_type)) isPromptLab = true;
+                    }
+
+                    if (isPromptLab) {
+                        //如果是动态提示
+                        if (document.body.querySelector('#dynamic_prompt').classList.contains("mix_on")) {
+                            for (const node of window._appData.input) {
+                                if (Command._textNodes.includes(node.class_type)) {
+                                    let id = `#input_node_id_${node.id}`
+                                    let prompt = Command.dynamicPrompts(document.body.querySelector(id)?.value || "")
+                                    if (node.class_type == "PromptSimplification") {
+                                        if (window._appData.data) window._appData.data[node.id].inputs.prompt = prompt;
+                                        //更新输入参数
+                                        updateInputData(node.id, (inputs) => {
+                                            inputs.prompt = prompt;
+                                            return inputs
+                                        })
+                                    } else {
+                                        if (window._appData.data) window._appData.data[node.id].inputs.text = prompt;
+                                        //更新输入参数
+                                        updateInputData(node.id, (inputs) => {
+                                            inputs.text = prompt;
+                                            return inputs
+                                        })
+                                    }
+                                }
+                            };
+                        } else {
+                            //是批量功能
+                            let prompts = {};
+                            for (const node of window._appData.input) {
+                                if (Command._textNodes.includes(node.class_type)) {
+                                    let id = `#input_node_id_${node.id}`
+                                    let ps = Command.generateAllCombinations(document.body.querySelector(id)?.value || "")
+                                    if (node.class_type == "PromptSimplification") {
+                                        //更新输入参数
+                                        prompts[node.id] = ["prompt", ps]
+
+                                    } else {
+                                        //更新输入参数
+                                        prompts[node.id] = ["text", ps]
+                                    }
+                                }
+
+                            }
+
+
+                            function generateCombinations(prompts, input) {
+                                let results = [];
+
+                                function combine(currentInput, index) {
+                                    if (index === input.length) {
+                                        results.push(JSON.parse(JSON.stringify(currentInput)));
+                                        return;
+                                    }
+
+                                    let current = input[index];
+                                    let id = current.id;
+                                    let keys = Object.keys(current.inputs);
+
+                                    // 如果 prompts 中没有对应的 id，直接递归下一个
+                                    if (!prompts[id]) {
+                                        combine(currentInput, index + 1);
+                                        return;
+                                    }
+
+                                    let values = prompts[id][1];
+                                    for (let value of values) {
+                                        let newInput = JSON.parse(JSON.stringify(currentInput));
+
+                                        // 替换输入值
+                                        for (let key of keys) {
+                                            if (typeof newInput[index].inputs[key] === 'string') {
+                                                newInput[index].inputs[key] = value;
+                                            }
+                                        }
+                                        combine(newInput, index + 1);
+                                    }
+                                }
+
+                                combine(JSON.parse(JSON.stringify(input)), 0);
+                                return results;
+                            }
+
+                            console.log('##generateCombinations', prompts, [...window._appData.input.filter(inp => inp)])
+                            let inputs = generateCombinations(prompts, [...window._appData.input.filter(inp => inp)])
+
+                            for (const inp of inputs) {
+                                Command.queuePromptNew(
+                                    window._appData.filename,
+                                    window._appData.category,
+                                    window._appData.seed,
+                                    inp,
+                                    api.clientId,
+                                    window._appData.data ? [{
+                                        data: {
+                                            output: window._appData.data
+                                        }
+                                    }] : null
+                                ).then(res => {
+
+                                    if (!res) {
+                                        if (api.runningCancel) {
+                                            api.runningCancel();
+                                            api.runningCancel = null;
+                                        }
+
+                                        ui.promptButton.element.classList.remove('disabled');
+                                        ui.promptButton.element.innerText = 'Create';
+
+                                        return true
+
+                                    }
+                                })
+                            }
+
+                            return
+
+                        }
+
+                    }
+
+
+                    Command.queuePromptNew(
+                        window._appData.filename,
+                        window._appData.category,
+                        window._appData.seed,
+                        window._appData.input.filter(inp => inp),
+                        api.clientId,
+                        window._appData.data ? [{
+                            data: {
+                                output: window._appData.data
+                            }
+                        }] : null
+                    ).then(res => {
+
+                        if (!res) {
+                            if (api.runningCancel) {
+                                api.runningCancel();
+                                api.runningCancel = null;
+                            }
+
+                            ui.promptButton.element.classList.remove('disabled');
+                            ui.promptButton.element.innerText = 'Create';
+
+                            return true
+
+                        }
+                    })
+
                 }, () => {
                     // 取消
                     if (api.runningCancel) {
@@ -3073,7 +3091,7 @@
                     window.parent.postMessage({ cmd: 'status', data: `queue#${detail.exec_info?.queue_remaining}` }, '*');
                     if (detail.exec_info?.queue_remaining === 0) {
                         // 运行按钮重设
-                        ui.submitButton.reset()
+                        ui.promptButton.reset()
                         console.log('运行按钮重设')
                     }
                 } catch (error) {
@@ -3085,10 +3103,10 @@
 
             api.addEventListener("progress", ({ detail }) => {
                 console.log("progress", detail);
-                const class_type = window._appData.data[detail?.node]?.class_type || ''
+                const class_type = window._appData.data ? (window._appData.data[detail?.node]?.class_type || '') : ""
                 try {
                     ui.status.update(`${parseFloat(100 * detail.value / detail.max).toFixed(1)}% ${class_type}`);
-                    ui.submitButton.running()
+                    ui.promptButton.running()
                 } catch (error) {
 
                 }
@@ -3097,20 +3115,23 @@
             api.addEventListener("executed", async ({ detail }) => {
                 console.log("executed", detail)
                 executed(detail, show);
+                let class_type = window._appData.data ? window._appData.data[detail.node]?.class_type : ""
+                if (class_type) {
+                    try {
+                        ui.status.update(`executed_#${class_type}`);
+                        ui.promptButton.reset()
+                    } catch (error) {
 
-                try {
-                    ui.status.update(`executed_#${window._appData.data[detail.node]?.class_type}`);
-                    ui.submitButton.reset()
-                } catch (error) {
-
+                    }
                 }
+
 
                 // console.log(Running, Pending);
                 try {
-                    const { Running, Pending } = await getQueue(api.clientId);
+                    const { Running, Pending } = await Command.getQueue(api.clientId);
                     if (Running && Running[0]) {
                         api.runningCancel = Running[0].remove;
-                        ui.submitButton.running()
+                        ui.promptButton.running()
                     } else {
                         api.runningCancel = null;
                     }
@@ -3137,13 +3158,13 @@
                 console.log("execution_start", detail)
                 try {
                     ui.status.update(`execution_start`);
-                    ui.submitButton.running()
+                    ui.promptButton.running()
                 } catch (error) {
 
                 }
 
                 try {
-                    const { Running, Pending } = await getQueue(api.clientId);
+                    const { Running, Pending } = await Command.getQueue(api.clientId);
                     if (Running && Running[0]) {
                         api.runningCancel = Running[0].remove;
                     } else {
@@ -3209,12 +3230,14 @@
             // author信息
             if (appData.author) {
                 let div = document.body.querySelector('#author');
-                if (appData.author.link) div.href = appData.author.link
-                div.style = `z-index:20;display: flex;flex-direction: column;position: fixed;bottom: 24px;left: 24px;cursor: pointer;text-decoration: none;color: black;`
-                div.innerHTML = `<p style="font-size:12px;margin: 8px 0;">Author:</p>
+                if (div) {
+                    if (appData.author.link) div.href = appData.author.link;
+                    div.innerHTML = `<p style="font-size:12px;margin: 8px 0;">Author:</p>
                 <div style="display: flex;"> <img style="width:32px;height:32px;border-radius: 100%;" 
                 src="${appData.author.avatar || base64Df}"/>
                 <p style="margin-left:8px;font-size:12px;font-weight:800">${appData.author.name || '-'}</p></div>`
+                }
+
             }
 
         }
@@ -3297,71 +3320,13 @@
             })
         }
 
-        // 请求历史数据
-        async function getPromptResult(category) {
-            let url = get_url()
-            try {
-                const response = await fetch(`${url}/mixlab/prompt_result`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        action: "all",
-                    }),
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("#getPromptResult:", category, data);
-
-                    return data.result.filter(r => r.appInfo.category == category)
-                    // 处理返回的数据
-                } else {
-                    console.log("Error:", response.status);
-                    // 处理错误情况
-                }
-            } catch (error) {
-                console.log("Error:", error);
-                // 处理异常情况
-            }
-        }
-        // 保存历史数据
-        async function savePromptResult(data) {
-            let url = get_url()
-            try {
-                const response = await fetch(`${url}/mixlab/prompt_result`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        action: "save",
-                        data
-                    }),
-                });
-
-                if (response.ok) {
-                    const res = await response.json();
-                    console.log("Response:", res);
-                    return res
-                    // 处理返回的数据
-                } else {
-                    console.log("Error:", response.status);
-                    // 处理错误情况
-                }
-            } catch (error) {
-                console.log("Error:", error);
-                // 处理异常情况
-            }
-        }
 
 
 
         async function createHistoryList(category) {
             if (document.body.querySelector('#history_container')) document.body.querySelector('#history_container').remove();
 
-            window._historyData = await getPromptResult(category);
+            window._historyData = await Command.getPromptResult(category);
 
             if (!window._historyData || (window._historyData && window._historyData.length === 0)) return
 
@@ -3453,14 +3418,14 @@
             const innerApp = checkIsInnerApp();
 
             if (!innerApp) {
-                const { category, filename } = getFilenameAndCategoryFromUrl(location.href);
-                window._apps = await get_my_app(category, filename);
+
+                window._apps = await Command.getAppInit();
 
                 window._appData = window._apps[0];
 
                 createAppList(window._apps);
 
-                if (window._apps.length > 0) await createHistoryList(category || '');
+                // if (window._apps.length > 0) await createHistoryList(category || '');
 
                 createApp(window._appData);
             }
@@ -3498,18 +3463,216 @@
                         createApp(window._appData);
                     } else {
                         // todo welcome页面
-                        document.body.innerHTML = `<h3 style="padding: 99px;">Welcome to Mixlab Nodes App!</h3>`
+                        document.body.innerHTML = `<h3 id="welcome_info" style="padding: 99px;">Welcome to Mixlab Nodes App!</h3>`
                     }
-
-
-
                 });
-
-
             }
 
             return innerApp == 1
 
+        }
+
+
+    </script>
+
+    <script>
+        class MaskDrawer {
+            constructor(
+                baseCanvasId,
+                maskCanvasId,
+                brushBtnId,
+                eraserBtnId,
+                sizeSliderId,
+                sizeValueId,
+                clearBtnId,
+                saveBtnId,
+                autoCutBtnId,
+                modelSelectId,
+                closeBtnId
+            ) {
+                this.baseCanvas = document.getElementById(baseCanvasId);
+                this.maskCanvas = document.getElementById(maskCanvasId);
+                this.maskCanvas.style.opacity = "0.8"
+                this.baseCtx = this.baseCanvas.getContext('2d');
+                this.maskCtx = this.maskCanvas.getContext('2d');
+                this.isDrawing = false;
+                this.currentTool = 'brush';
+                this.brushSize = 10;
+
+                // 设置初始底图背景为白色
+                this.baseCtx.fillStyle = 'white';
+                this.baseCtx.fillRect(0, 0, this.baseCanvas.width, this.baseCanvas.height);
+
+                // 工具选择
+                this.brushBtn = document.getElementById(brushBtnId);
+                this.eraserBtn = document.getElementById(eraserBtnId);
+
+                this.brushBtn.addEventListener('click', () => this.selectTool('brush'));
+                this.eraserBtn.addEventListener('click', () => this.selectTool('eraser'));
+
+                // 笔刷大小调节
+                this.sizeSlider = document.getElementById(sizeSliderId);
+                this.sizeValue = document.getElementById(sizeValueId);
+                this.sizeSlider.addEventListener('input', (e) => this.changeBrushSize(e));
+
+                // 清空画布
+                document.getElementById(clearBtnId).addEventListener('click', () => this.clearCanvas());
+
+                // 保存蒙版
+                document.getElementById(saveBtnId).addEventListener('click', () => this.saveMask());
+
+                // 自动抠图
+                this.autoCutBtn = document.getElementById(autoCutBtnId);
+                this.autoCutBtn.addEventListener('click', () => this.autoCut());
+
+                // 退出
+                this.closeBtn = document.getElementById(closeBtnId);
+                this.closeBtn.addEventListener('click', () => this.closeEdit());
+
+                // 模型选择
+                this.modelSelect = document.getElementById(modelSelectId);
+
+                // 绘制
+                this.maskCanvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.maskCanvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.maskCanvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.maskCanvas.addEventListener('mouseout', () => this.stopDrawing());
+            }
+
+            closeEdit() {
+                if (this.close) this.close()
+            }
+
+            newImageForMaskEdit(img) {
+                let width = img.naturalWidth, height = img.naturalHeight;
+                this.baseCanvas.width = width;
+                this.baseCanvas.height = height;
+                this.maskCanvas.width = width;
+                this.maskCanvas.height = height;
+                this.baseCtx.drawImage(img, 0, 0, this.baseCanvas.width, this.baseCanvas.height);
+            }
+
+            loadMask(maskImg) {
+                let width = maskImg.naturalWidth || maskImg.width, height = maskImg.naturalHeight || maskImg.height;
+                this.maskCanvas.width = width;
+                this.maskCanvas.height = height;
+                this.maskCtx.drawImage(maskImg, 0, 0, this.maskCanvas.width, this.maskCanvas.height);
+            }
+
+            selectTool(tool) {
+                this.currentTool = tool;
+                if (tool === 'brush') {
+                    this.brushBtn.classList.add('active');
+                    this.eraserBtn.classList.remove('active');
+                } else {
+                    this.eraserBtn.classList.add('active');
+                    this.brushBtn.classList.remove('active');
+                }
+            }
+
+            changeBrushSize(e) {
+                this.brushSize = parseInt(e.target.value);
+                this.sizeValue.textContent = this.brushSize;
+            }
+
+            clearCanvas() {
+                this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+            }
+
+            saveMask() {
+                const dataURL = this.maskCanvas.toDataURL('image/png');
+
+                // 获取图像数据
+                const imageData = this.maskCtx.getImageData(
+                    0, 0,
+                    this.maskCanvas.width, this.maskCanvas.height);
+                const imageDataData = imageData.data;
+
+                // 反相图像数据
+                for (let i = 0; i < imageDataData.length; i += 4) {
+                    // imageDataData[i] = 255 - imageDataData[i];
+                    // imageDataData[i + 1] = 255 - imageDataData[i + 1];
+                    // imageDataData[i + 2] = 255 - imageDataData[i + 2];
+                    imageDataData[i + 3] = 255 - imageDataData[i + 3]; // 反相透明度
+                }
+
+                // 更新画布
+                let tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.maskCanvas.width;
+                tempCanvas.height = this.maskCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imageData, 0, 0);
+
+                let base64 = tempCanvas.toDataURL();
+
+
+                // 对外提供接口，可以将dataURL传递到需要的地方
+                // console.log(dataURL);
+                this.saveCallback(base64, this.maskCanvas.width, this.maskCanvas.height);
+            }
+
+            autoCut() {
+                // 获取选中的模型名称
+                const selectedModel = this.modelSelect.value;
+                console.log(`Using model: ${selectedModel}`);
+
+                const dataURL = this.baseCanvas.toDataURL('image/png');
+
+                this.autoCutCallback(selectedModel, dataURL).then(maskImg => {
+                    this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+                    this.loadMask(maskImg);
+                    // 这里假设自动抠图算法已经实现
+                    // 我们简单模拟一下这个功能
+                    // this.maskCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    // this.maskCtx.fillRect(50, 50, this.maskCanvas.width - 100, this.maskCanvas.height - 100);
+
+                });
+
+            }
+
+            startDrawing(e) {
+                this.isDrawing = true;
+                this.draw(e);
+            }
+
+            draw(e) {
+                if (!this.isDrawing) return;
+
+                const rect = this.maskCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                this.maskCtx.lineWidth = this.brushSize;
+                this.maskCtx.lineCap = 'round';
+                this.maskCtx.lineJoin = 'round';
+
+                if (this.currentTool === 'brush') {
+                    this.maskCtx.globalCompositeOperation = 'source-over';
+                    this.maskCtx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+                } else {
+                    this.maskCtx.globalCompositeOperation = 'destination-out';
+                }
+
+                this.maskCtx.lineTo(x, y);
+                this.maskCtx.stroke();
+                this.maskCtx.beginPath();
+                this.maskCtx.moveTo(x, y);
+            }
+
+            stopDrawing() {
+                this.isDrawing = false;
+                this.maskCtx.beginPath();
+            }
+
+            initializeModelOptions(models) {
+                this.modelSelect.innerHTML = '';
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    this.modelSelect.appendChild(option);
+                });
+            }
         }
 
 

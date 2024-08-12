@@ -3,12 +3,14 @@ import os
 import subprocess
 import importlib.util
 import sys,json
-import urllib
+import execution
+import uuid
 import hashlib
 import datetime
 import folder_paths
 import logging
 import base64,io,re
+import random
 from PIL import Image
 from comfy.cli_args import args
 import time
@@ -21,20 +23,15 @@ except:
     print('#fix sys.stdout.isatty')
     sys.stdout.isatty = lambda: False
 
-llama_port=None
-llama_model=""
-llama_chat_format=""
+_URL_=None
 
-tic = time.time()
-try:
-    from .nodes.ChatGPT import get_llama_models,get_llama_model_path,llama_cpp_client
-    llama_cpp_client("")
 
-except:
-    print("##nodes.ChatGPT ImportError")
-toc = time.time()
-print(f'import .nodes.ChatGPT: {toc - tic}')
-tic = time.time()
+# try:
+#     from .nodes.ChatGPT import get_llama_models,get_llama_model_path,llama_cpp_client
+#     llama_cpp_client("")
+
+# except:
+#     print("##nodes.ChatGPT ImportError")
 
 
 from .nodes.RembgNode import get_rembg_models,U2NET_HOME,run_briarmbg,run_rembg
@@ -53,26 +50,35 @@ except ImportError:
     print("or")
     print("pip install -r requirements.txt")
     sys.exit()
-   
-def is_installed(package, package_overwrite=None):
+
+
+def is_installed(package, package_overwrite=None,auto_install=True):
+    is_has=False
     try:
         spec = importlib.util.find_spec(package)
+        is_has=spec is not None
     except ModuleNotFoundError:
         pass
 
     package = package_overwrite or package
 
     if spec is None:
-        print(f"Installing {package}...")
-        # 清华源 -i https://pypi.tuna.tsinghua.edu.cn/simple
-        command = f'"{python}" -m pip install {package}'
-  
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=os.environ)
+        if auto_install==True:
+            print(f"Installing {package}...")
+            # 清华源 -i https://pypi.tuna.tsinghua.edu.cn/simple
+            command = f'"{python}" -m pip install {package}'
+    
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=os.environ)
 
-        if result.returncode != 0:
-            print(f"Couldn't install\nCommand: {command}\nError code: {result.returncode}")
+            is_has=True
+
+            if result.returncode != 0:
+                print(f"Couldn't install\nCommand: {command}\nError code: {result.returncode}")
+                is_has=False
     else:
         print(package+'## OK')
+
+    return is_has
      
 try:
     import OpenSSL
@@ -99,7 +105,6 @@ except ImportError:
 toc = time.time()
 print(f'import watchdog: {toc - tic}')
 tic = time.time()
-
 
 
 def install_openai():
@@ -188,15 +193,14 @@ def create_for_https():
         os.mkdir(https_key_path)
     if not os.path.exists(crt):
         create_key(key,crt)
-
-    print('https_key OK: ', crt,key)
+    # print('https_key OK: ', crt,key)
     return (crt,key)
 
 
 
 # workflow  目录下的所有json
 def read_workflow_json_files_all(folder_path):
-    print('#read_workflow_json_files_all',folder_path)
+    # print('#read_workflow_json_files_all',folder_path)
     json_files = []
     for root, dirs, files in os.walk(folder_path):
         for file in files:
@@ -326,31 +330,32 @@ def get_my_workflow_for_app(filename="my_workflow_app.json",category="",is_all=F
         print('app_workflow_path: ',app_workflow_path)
         try:
             with open(app_workflow_path) as json_file:
+                json_data=json.load(json_file)
                 apps = [{
                     'filename':filename,
-                    'data':json.load(json_file)
+                    'data':json_data
                 }]
         except Exception as e:
             print("发生异常：", str(e))
         
         # 这个代码不需要
         # if len(apps)==1 and category!='' and category!=None:
-            data=read_workflow_json_files(category_path)
+        data=read_workflow_json_files(category_path)
             
-            for item in data:
-                x=item["data"]
-                # print(apps[0]['filename'] ,item["filename"])
-                if apps[0]['filename']!=item["filename"]:
-                    category=''
-                    input=None
-                    output=None
-                    if 'category' in x['app']:
-                        category=x['app']['category']
-                    if 'input' in x['app']:
-                        input=x['app']['input']
-                    if 'output' in x['app']:
-                        output=x['app']['output']
-                    apps.append({
+        for item in data:
+            x=item["data"]
+            # print(apps[0]['filename'] ,item["filename"])
+            if apps[0]['filename']!=item["filename"]:
+                category=''
+                input=None
+                output=None
+                if 'category' in x['app']:
+                    category=x['app']['category']
+                if 'input' in x['app']:
+                    input=x['app']['input']
+                if 'output' in x['app']:
+                    output=x['app']['output']
+                apps.append({
                         "filename":item["filename"],
                         # "category":category,
                         "data":{
@@ -470,6 +475,7 @@ async def check_port_available(address, port):
 
 # https
 async def new_start(self, address, port, verbose=True, call_on_start=None):
+    global _URL_
     try:
         runner = web.AppRunner(self.app, access_log=None)
         await runner.setup()
@@ -538,10 +544,19 @@ async def new_start(self, address, port, verbose=True, call_on_start=None):
             logging.info("\n")
             logging.info("\n\nStarting server")
 
+            import socket
+
+            hostname = socket.gethostname()
+            ip_address = socket.gethostbyname(hostname)
+
+            # print(f"本机的IP地址是: {ip_address}")
+
+
             # print("\033[93mStarting server\n")
-            logging.info("\033[93mTo see the GUI go to: http://{}:{}".format(address, http_port))
-            logging.info("\033[93mTo see the GUI go to: https://{}:{}\033[0m".format(address, https_port))
- 
+            logging.info("\033[93mTo see the GUI go to: http://{}:{} or http://{}:{}".format(ip_address, http_port,address,http_port))
+            logging.info("\033[93mTo see the GUI go to: https://{}:{} or https://{}:{}\033[0m".format(ip_address, https_port,address,https_port))
+
+            _URL_="http://{}:{}".format(address,http_port)
             # print("\033[93mTo see the GUI go to: http://{}:{}".format(address, http_port))
             # print("\033[93mTo see the GUI go to: https://{}:{}\033[0m".format(address, https_port))
 
@@ -625,13 +640,34 @@ async def mixlab_workflow_hander(request):
                     category=data['category']
                 if 'admin' in data:
                     admin=data['admin']
+
+                ds=get_my_workflow_for_app(filename,category,admin)
+                data=[]           
+                for json_data in ds:
+                    # 不传给前端
+                    if 'output' in json_data['data']:
+                        del json_data['data']['output']
+                    if 'workflow' in json_data['data']:
+                        del json_data['data']['workflow']
+                    data.append(json_data)
+
                 result={
-                    'data':get_my_workflow_for_app(filename,category,admin),
+                    'data':data,
                     'status':'success',
                 }
             elif data['task']=='list':
+                ds=get_workflows()
+                data=[]
+                for json_data in ds:
+                    # 不传给前端
+                    if 'output' in json_data['data']:
+                        del json_data['data']['output']
+                    if 'workflow' in json_data['data']:
+                        del json_data['data']['workflow']
+                    data.append(json_data)
+
                 result={
-                    'data':get_workflows(),
+                    'data':data,
                     'status':'success',
                 }
     except Exception as e:
@@ -665,11 +701,11 @@ async def get_checkpoints(request):
     except Exception as e:
         print('/mixlab/folder_paths',False,e)
 
-    try:
-        if data['type']=='llamafile':
-            names=get_llama_models()
-    except:
-        print("llamafile none")
+    # try:
+    #     if data['type']=='llamafile':
+    #         names=get_llama_models()
+    # except:
+    #     print("llamafile none")
 
     try:
         if data['type']=='rembg':
@@ -716,139 +752,263 @@ async def rembg_hander(request):
 
     return web.json_response(result)
 
+# 保存运行结果？暂时去掉
+# @routes.post("/mixlab/prompt_result")
+# async def post_prompt_result(request):
+#     data = await request.json()
+#     res=None
+#     # print(data)
+#     try:
+#         action=data['action']
+#         if action=='save':
+#             result=data['data']
+#             res=save_prompt_result(result['prompt_id'],result)
+#         elif action=='all':
+#             res=get_prompt_result()
+#     except Exception as e:
+#         print('/mixlab/prompt_result',False,e)
+    
+#     return web.json_response({"result":res})
 
-@routes.post("/mixlab/prompt_result")
-async def post_prompt_result(request):
-    data = await request.json()
-    res=None
-    # print(data)
+# 种子设置
+def random_seed(seed, data):
+    max_seed = 4294967295
+
+    for id, value in data.items():
+        # print(seed,id)
+        if id in seed:
+            if 'seed' in value['inputs'] and not isinstance(value['inputs']['seed'], list) and seed[id] in ['increment', 'decrement', 'randomize']:
+                value['inputs']['seed'] = round(random.random() * max_seed)
+            
+            if 'noise_seed' in value['inputs'] and not isinstance(value['inputs']['noise_seed'], list) and seed[id] in ['increment', 'decrement', 'randomize']:
+                value['inputs']['noise_seed'] = round(random.random() * max_seed)
+            
+            if value.get('class_type') == "Seed_" and seed[id] in ['increment', 'decrement', 'randomize']:
+                value['inputs']['seed'] = round(random.random() * max_seed)
+            
+        print('new Seed', value)
+    
+    return data
+
+
+# 运行工作流，代替官方的prompt接口
+@routes.post("/mixlab/prompt")
+async def mixlab_post_prompt(request):
+    p_intance=PromptServer.instance
+    logging.info("/mixlab/prompt")
+    resp_code = 200
+    out_string = ""
+    json_data =  await request.json()
+    # json_data = p_intance.trigger_on_prompt(json_data)
+    # filename,category, client_id ,input
+    # workflow 的 filename,category
+
+    # 输入的参数
+    input_data=json_data['input'] if "input" in json_data else []
+    # 种子
+    seed=json_data['seed'] if "seed" in json_data else {}
+
     try:
-        action=data['action']
-        if action=='save':
-            result=data['data']
-            res=save_prompt_result(result['prompt_id'],result)
-        elif action=='all':
-            res=get_prompt_result()
-    except Exception as e:
-        print('/mixlab/prompt_result',False,e)
+        apps=json_data['apps']
+    except:
+        apps=get_my_workflow_for_app(json_data['filename'],json_data['category'],False)
     
-    return web.json_response({"result":res})
-
-
-async def start_local_llm(data):
-    global llama_port,llama_model,llama_chat_format
-    if llama_port and llama_model and llama_chat_format:
-        return {"port":llama_port,"model":llama_model,"chat_format":llama_chat_format}
-
-    import threading
-    import uvicorn
-    from llama_cpp.server.app import create_app
-    from llama_cpp.server.settings import (
-                Settings,
-                ServerSettings,
-                ModelSettings,
-                ConfigFileSettings,
-            )
+    prompt=json_data['prompt'] if 'prompt' in json_data else None
     
-    if not "model" in data and "model_path" in data:
-        data['model']= os.path.basename(data["model_path"])
-        model=data["model_path"]
+    if len(apps)>0:
+        # 取到prompt
+        prompt=apps[0]['data']['output']
+        # logging.info(prompt)
+        # 更新input_data到prompt里
+        '''
+          {
+                "inputs": {
+                    "number": 512,
+                    "min_value": 512,
+                    "max_value": 2048,
+                    "step": 1
+                },
+                "class_type": "IntNumber",
+                "id": "22"
+            },
+        '''
 
-    elif "model" in data:
-        model=get_llama_model_path(data['model'])
-
-    n_gpu_layers=-1
-
-    if "n_gpu_layers" in data:
-        n_gpu_layers=data['n_gpu_layers']
+        for inp in input_data:
+            id=inp['id']
+            if prompt[id]['class_type']==inp['class_type']:
+                prompt[id]['inputs'].update(inp['inputs']) 
 
 
-    chat_format="chatml"
+    if prompt==None:
+        return web.json_response({"error": "no prompt", "node_errors": []}, status=400)
+    else:
+        # 种子更新 
+        '''
+            "seed": {
+                    "45": "randomize",
+                    "46": "randomize"
+                }
+            '''
+        json_data["prompt"]=random_seed(seed,prompt)
 
-    model_alias=os.path.basename(model)
-
-    # 多模态
-    clip_model_path=None
+    # print("#json_data",prompt)
+    # 需要把apps处理成 prompt
+    # 注意seed的处理
     
-    prefix = "llava-phi-3-mini"
-    file_name = prefix+"-mmproj-"
-    if model_alias.startswith(prefix):
-        for file in os.listdir(os.path.dirname(model)):
-            if file.startswith(file_name):
-                clip_model_path=os.path.join(os.path.dirname(model),file)
-                chat_format='llava-1-5'
-    print('#clip_model_path',chat_format,clip_model_path)
+    if "number" in json_data:
+        number = float(json_data['number'])
+    else:
+        number = p_intance.number
+        if "front" in json_data:
+            if json_data['front']:
+                number = -number
+
+        p_intance.number += 1
+
+    if "prompt" in json_data:
+        prompt = json_data["prompt"]
+        valid = execution.validate_prompt(prompt)
+        extra_data = {}
+        if "extra_data" in json_data:
+            extra_data = json_data["extra_data"]
+
+        if "client_id" in json_data:
+            extra_data["client_id"] = json_data["client_id"]
+        if valid[0]:
+            prompt_id = str(uuid.uuid4())
+            outputs_to_execute = valid[2]
+            p_intance.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
+            response = {"prompt_id": prompt_id, "number": number, "node_errors": valid[3]}
+            return web.json_response(response)
+        else:
+            logging.warning("invalid prompt: {}".format(valid[1]))
+            return web.json_response({"error": valid[1], "node_errors": valid[3]}, status=400)
+    else:
+        return web.json_response({"error": "no prompt", "node_errors": []}, status=400)
 
 
-    address="127.0.0.1"
-    port=9090
-    success = False
-    for i in range(11):  # 尝试最多11次
-        if await check_port_available(address, port + i):
-            port = port + i
-            success = True
-            break
+# AR页面
+# @routes.get('/mixlab/AR')
+async def handle_ar_page(request):
+    html_file = os.path.join(current_path, "web/ar.html")
+    if os.path.exists(html_file):
+        with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
+            html_data = f.read()
+            return web.Response(text=html_data, content_type='text/html')
+    else:
+        return web.Response(text="HTML file not found", status=404)
 
-    if success == False:
-        return {"port":None,"model":""}
+
+# async def start_local_llm(data):
+#     global llama_port,llama_model,llama_chat_format
+#     if llama_port and llama_model and llama_chat_format:
+#         return {"port":llama_port,"model":llama_model,"chat_format":llama_chat_format}
+
+#     import threading
+#     import uvicorn
+#     from llama_cpp.server.app import create_app
+#     from llama_cpp.server.settings import (
+#                 Settings,
+#                 ServerSettings,
+#                 ModelSettings,
+#                 ConfigFileSettings,
+#             )
+    
+#     if not "model" in data and "model_path" in data:
+#         data['model']= os.path.basename(data["model_path"])
+#         model=data["model_path"]
+
+#     elif "model" in data:
+#         model=get_llama_model_path(data['model'])
+
+#     n_gpu_layers=-1
+
+#     if "n_gpu_layers" in data:
+#         n_gpu_layers=data['n_gpu_layers']
+
+
+#     chat_format="chatml"
+
+#     model_alias=os.path.basename(model)
+
+#     # 多模态
+#     clip_model_path=None
+    
+#     prefix = "llava-phi-3-mini"
+#     file_name = prefix+"-mmproj-"
+#     if model_alias.startswith(prefix):
+#         for file in os.listdir(os.path.dirname(model)):
+#             if file.startswith(file_name):
+#                 clip_model_path=os.path.join(os.path.dirname(model),file)
+#                 chat_format='llava-1-5'
+#     # print('#clip_model_path',chat_format,clip_model_path,model)
+
+#     address="127.0.0.1"
+#     port=9090
+#     success = False
+#     for i in range(11):  # 尝试最多11次
+#         if await check_port_available(address, port + i):
+#             port = port + i
+#             success = True
+#             break
+
+#     if success == False:
+#         return {"port":None,"model":""}
     
     
-    server_settings=ServerSettings(host=address,port=port)
+#     server_settings=ServerSettings(host=address,port=port)
 
-    name, ext = os.path.splitext(os.path.basename(model))
-    print('#model',name)
-    app = create_app(
-                server_settings=server_settings,
-                model_settings=[
-                    ModelSettings(
-                    model=model,
-                    model_alias=name,
-                    n_gpu_layers=n_gpu_layers,
-                    n_ctx=4098,
-                    chat_format=chat_format,
-                    embedding=False,
-                    clip_model_path=clip_model_path
-                    )])
+#     name, ext = os.path.splitext(os.path.basename(model))
+#     if name:
+#         # print('#model',name)
+#         app = create_app(
+#                     server_settings=server_settings,
+#                     model_settings=[
+#                         ModelSettings(
+#                         model=model,
+#                         model_alias=name,
+#                         n_gpu_layers=n_gpu_layers,
+#                         n_ctx=4098,
+#                         chat_format=chat_format,
+#                         embedding=False,
+#                         clip_model_path=clip_model_path
+#                         )])
 
-    def run_uvicorn():
-        uvicorn.run(
-                app,
-                host=os.getenv("HOST", server_settings.host),
-                port=int(os.getenv("PORT", server_settings.port)),
-                ssl_keyfile=server_settings.ssl_keyfile,
-                ssl_certfile=server_settings.ssl_certfile,
-            )
+#         def run_uvicorn():
+#             uvicorn.run(
+#                     app,
+#                     host=os.getenv("HOST", server_settings.host),
+#                     port=int(os.getenv("PORT", server_settings.port)),
+#                     ssl_keyfile=server_settings.ssl_keyfile,
+#                     ssl_certfile=server_settings.ssl_certfile,
+#                 )
 
-    # 创建一个子线程
-    thread = threading.Thread(target=run_uvicorn)
+#         # 创建一个子线程
+#         thread = threading.Thread(target=run_uvicorn)
 
-    # 启动子线程
-    thread.start()
+#         # 启动子线程
+#         thread.start()
 
-    llama_port=port
-    llama_model=data['model']
-    llama_chat_format=chat_format
+#         llama_port=port
+#         llama_model=data['model']
+#         llama_chat_format=chat_format
 
-    return  {"port":llama_port,"model":llama_model,"chat_format":llama_chat_format}
+#     return  {"port":llama_port,"model":llama_model,"chat_format":llama_chat_format}
 
 # llam服务的开启
-@routes.post('/mixlab/start_llama')
-async def my_hander_method(request):
-    data =await request.json()
-    if not args.start_llama:
-        result= {"port":None,"model":"","llama_cpp_error":True}
-        print('start_local_llm error')
-        return web.json_response(result)
-    # print(data)
-    if llama_port and llama_model and llama_chat_format:
-        return web.json_response({"port":llama_port,"model":llama_model,"chat_format":llama_chat_format} )
-    try:
-        result=await start_local_llm(data)
-    except Exception as e:
-        result= {"port":None,"model":"","llama_cpp_error":True}
-        print(f'start_local_llm error {e}')
+# @routes.post('/mixlab/start_llama')
+# async def my_hander_method(request):
+#     data =await request.json()
+#     # print(data)
+#     if llama_port and llama_model and llama_chat_format:
+#         return web.json_response({"port":llama_port,"model":llama_model,"chat_format":llama_chat_format} )
+#     try:
+#         result=await start_local_llm(data)
+#     except:
+#         result= {"port":None,"model":"","llama_cpp_error":True}
+#         print('start_local_llm error')
 
-    return web.json_response(result)
+#     return web.json_response(result)
 
 # 重启服务
 @routes.post('/mixlab/re_start')
@@ -859,17 +1019,14 @@ def re_start(request):
         pass
     return os.execv(sys.executable, [sys.executable] + sys.argv)
 
-
+# 状态
+@routes.get('/mixlab/status')
+def mix_status(request):
+    return web.Response(text="running#"+_URL_)
 
 # 导入节点
 from .nodes.PromptNode import GLIGENTextBoxApply_Advanced,EmbeddingPrompt,RandomPrompt,PromptSlide,PromptSimplification,PromptImage,JoinWithDelimiter
-toc = time.time()
-print(f'import .nodes.PromptNode: {toc - tic}')
-tic = time.time()
-from .nodes.ImageNode import ImageListToBatch_,ComparingTwoFrames,LoadImages_,CompositeImages,GridDisplayAndSave,GridInput,ImagesPrompt,SaveImageAndMetadata,SaveImageToLocal,SplitImage,GridOutput,GetImageSize_,MirroredImage,ImageColorTransfer,NoiseImage,TransparentImage,GradientImage,LoadImagesFromPath,LoadImagesFromURL,ResizeImage,TextImage,SvgImage,Image3D,ShowLayer,NewLayer,MergeLayers,CenterImage,AreaToMask,SmoothMask,SplitLongMask,ImageCropByAlpha,EnhanceImage,FaceToMask
-toc = time.time()
-print(f'import .nodes.ImageNode: {toc - tic}')
-tic = time.time()
+from .nodes.ImageNode import DepthViewer_,ImageBatchToList_,ImageListToBatch_,ComparingTwoFrames,LoadImages_,CompositeImages,GridDisplayAndSave,GridInput,ImagesPrompt,SaveImageAndMetadata,SaveImageToLocal,SplitImage,GridOutput,GetImageSize_,MirroredImage,ImageColorTransfer,NoiseImage,TransparentImage,GradientImage,LoadImagesFromPath,LoadImagesFromURL,ResizeImage,TextImage,SvgImage,Image3D,ShowLayer,NewLayer,MergeLayers,CenterImage,AreaToMask,SmoothMask,SplitLongMask,ImageCropByAlpha,EnhanceImage,FaceToMask
 # from .nodes.Vae import VAELoader,VAEDecode
 from .nodes.ScreenShareNode import ScreenShareNode,FloatingVideo
 toc = time.time()
@@ -877,13 +1034,7 @@ print(f'import .nodes.ScreenShareNode: {toc - tic}')
 tic = time.time()
 
 from .nodes.Audio import AudioPlayNode,SpeechRecognition,SpeechSynthesis
-toc = time.time()
-print(f'import .nodes.Audio: {toc - tic}')
-tic = time.time()
-from .nodes.Utils import IncrementingListNode,ListSplit,CreateLoraNames,CreateSampler_names,CreateCkptNames,CreateSeedNode,TESTNODE_,TESTNODE_TOKEN,AppInfo,IntNumber,FloatSlider,TextInput,ColorInput,FontInput,TextToNumber,DynamicDelayProcessor,LimitNumber,SwitchByIndex,MultiplicationNode
-toc = time.time()
-print(f'import .nodes.Utils: {toc - tic}')
-tic = time.time()
+from .nodes.Utils import KeyInput,IncrementingListNode,ListSplit,CreateLoraNames,CreateSampler_names,CreateCkptNames,CreateSeedNode,TESTNODE_,TESTNODE_TOKEN,AppInfo,IntNumber,FloatSlider,TextInput,ColorInput,FontInput,TextToNumber,DynamicDelayProcessor,LimitNumber,SwitchByIndex,MultiplicationNode
 from .nodes.Mask import PreviewMask_,MaskListReplace,MaskListMerge,OutlineMask,FeatheredMask
 toc = time.time()
 print(f'import .nodes.Mask: {toc - tic}')
@@ -894,6 +1045,7 @@ toc = time.time()
 print(f'import .nodes.Style: {toc - tic}')
 tic = time.time()
 
+from .nodes.P5 import P5Input
 
 
 # 要导出的所有节点及其名称的字典
@@ -925,7 +1077,9 @@ NODE_CLASS_MAPPINGS = {
     "ShowLayer":ShowLayer,
     "NewLayer":NewLayer,
     "ImageListToBatch_":ImageListToBatch_,
+    "ImageBatchToList_":ImageBatchToList_,
     "CompositeImages_":CompositeImages,
+    "DepthViewer": DepthViewer_,
     "SplitImage":SplitImage,
     "CenterImage":CenterImage,
     "GridOutput":GridOutput,
@@ -949,6 +1103,7 @@ NODE_CLASS_MAPPINGS = {
    
     "SpeechRecognition":SpeechRecognition,
     "SpeechSynthesis":SpeechSynthesis,
+    "KeyInput":KeyInput,
     "Color":ColorInput,
     "FloatSlider":FloatSlider,
     "IntNumber":IntNumber,
@@ -975,7 +1130,9 @@ NODE_CLASS_MAPPINGS = {
     "MaskListReplace_":MaskListReplace, 
     "IncrementingListNode_":IncrementingListNode,
     "PreviewMask_":PreviewMask_,
-    "AudioPlay":AudioPlayNode
+    "AudioPlay":AudioPlayNode,
+
+    "P5Input":P5Input
 }
 
 # 一个包含节点友好/可读的标题的字典
@@ -987,6 +1144,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     
     "Color":"Color Input ♾️MixlabApp",
     "TextInput_":"Text Input ♾️MixlabApp",
+    "KeyInput":"API Key Input ♾️MixlabApp",
     "FloatSlider":"Float Slider Input ♾️MixlabApp",
     "IntNumber":"Int Input ♾️MixlabApp",
     "ImagesPrompt_":"Images Input ♾️MixlabApp",
@@ -1005,6 +1163,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SpeechRecognition":"SpeechRecognition ♾️Mixlab",
     "3DImage":"3DImage ♾️Mixlab",
     "ImageListToBatch_":"Image List To Batch",
+    "ImageBatchToList_":"Image Batch To List",
     "CompositeImages_":"Composite Images ♾️Mixlab",
     "DynamicDelayProcessor":"DynamicDelayByText ♾️Mixlab",
     "LaMaInpainting":"LaMaInpainting ♾️Mixlab",
@@ -1033,36 +1192,41 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "IncrementingListNode_":"Create Incrementing Number List ♾️Mixlab",
     "LoadImagesToBatch":"Load Images(base64) ♾️Mixlab",
     "PreviewMask_":"Preview Mask",
-    "AudioPlay":"Audio Play ♾️Mixlab",
+    "AudioPlay":"Preview Audio ♾️Mixlab",
 
      "MultiplicationNode":"Math Operation ♾️Mixlab",
+
+     "P5Input":"P5 Input ♾️Mixlab for test"
 }
 
 # web ui的节点功能
 WEB_DIRECTORY = "./web"
-
 
 logging.info('--------------')
 logging.info('\033[91m ### Mixlab Nodes: \033[93mLoaded')
 # print('\033[91m ### Mixlab Nodes: \033[93mLoaded')
 
 try:
-    from .nodes.ChatGPT import ChatGPTNode,ShowTextForGPT,CharacterInText,TextSplitByDelimiter
+    from .nodes.ChatGPT import JsonRepair,ChatGPTNode,ShowTextForGPT,CharacterInText,TextSplitByDelimiter,SiliconflowFreeNode
     logging.info('ChatGPT.available True')
 
-    NODE_CLASS_MAPPINGS_V = {
+    NODE_CLASS_MAPPINGS_V = { 
        "ChatGPTOpenAI":ChatGPTNode,
+       "SiliconflowLLM":SiliconflowFreeNode,
         "ShowTextForGPT":ShowTextForGPT,
         "CharacterInText":CharacterInText,
         "TextSplitByDelimiter":TextSplitByDelimiter,
+        "JsonRepair":JsonRepair
     }
 
     # 一个包含节点友好/可读的标题的字典
-    NODE_DISPLAY_NAME_MAPPINGS_V = {
+    NODE_DISPLAY_NAME_MAPPINGS_V = { 
         "ChatGPTOpenAI":"ChatGPT & Local LLM ♾️Mixlab",
+        "SiliconflowLLM":"LLM Siliconflow ♾️Mixlab",
         "ShowTextForGPT":"Show Text ♾️MixlabApp",
         "CharacterInText":"Character In Text",
         "TextSplitByDelimiter":"Text Split By Delimiter",
+        "JsonRepair":"Json Repair"
     }
 
 
@@ -1089,10 +1253,12 @@ print(f'import .nodes.edit_mask: {toc - tic}')
 tic = time.time()
 
 try:
-    from .nodes.Lama import LaMaInpainting
-    logging.info('LaMaInpainting.available {}'.format(LaMaInpainting.available))
-    if LaMaInpainting.available:
-        NODE_CLASS_MAPPINGS['LaMaInpainting']=LaMaInpainting
+    is_has=is_installed('simple_lama_inpainting',None,False)
+    if is_has:
+        from .nodes.Lama import LaMaInpainting
+        logging.info('LaMaInpainting.available {}'.format(LaMaInpainting.available))
+        if LaMaInpainting.available:
+            NODE_CLASS_MAPPINGS['LaMaInpainting']=LaMaInpainting
 except Exception as e:
     logging.info('LaMaInpainting.available False')
 
@@ -1162,7 +1328,7 @@ try:
         "VideoCombine_Adv":"Video Combine",
         "LoadAndCombinedAudio_":"Load And Combined Audio",
         "CombineAudioVideo":"Combine Audio Video",
-        "ScenesNode_":"Scenes Node", 
+        "ScenesNode_":"Select Scene", 
         "GenerateFramesByCount":"Generate Frames By Count"
     }
 
@@ -1181,7 +1347,7 @@ tic = time.time()
 try:
     from .nodes.TripoSR import LoadTripoSRModel,TripoSRSampler,SaveTripoSRMesh
     logging.info('TripoSR.available')
-
+    # logging.info( folder_paths.get_temp_directory())
     NODE_CLASS_MAPPINGS['LoadTripoSRModel_']=LoadTripoSRModel
     NODE_DISPLAY_NAME_MAPPINGS["LoadTripoSRModel_"]= "Load TripoSR Model"
     
@@ -1198,10 +1364,6 @@ except Exception as e:
 toc = time.time()
 print(f'import .nodes.TripoSR: {toc - tic}')
 tic = time.time()
-
-
-
-
 
 
 logging.info('\033[93m -------------- \033[0m')

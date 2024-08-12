@@ -1,18 +1,31 @@
 ![](https://img.shields.io/github/release/shadowcz007/comfyui-mixlab-nodes)
 
-> 适配了最新版 comfyui 的 py3.11 ，torch 2.1.2+cu121
+> 适配了最新版 comfyui 的 py3.11 ，torch 2.3.1+cu121
 > [Mixlab nodes discord](https://discord.gg/cXs9vZSqeK)
 
 
 ##### `最新`：
 
+- 增加p5.js作为输入节点
+[workflow](./workflow/p5workflow.json)
+[workflow2](./workflow/p5-video-workflow.json)
+
+- App模式增加batch prompt，批量提示词，可以把动态提示词批量组成后运行
+
+![alt text](./assets/1722517810720.png)
+
+- 增加 API Key Input 节点，用于管理LLM的Key,同时优化LLM相关节点，为后续agent模式做准备
+
+- 增加 SiliconflowLLM，可以使用由Siliconflow提供的免费LLM
+
 - 增加 Edit Mask，方便在生成的时候手动绘制 mask [workflow](./workflow/edit-mask-workflow.json)
 
+- LaMaInpainting 调整为手动安装
 
-- ChatGPT 节点支持 Local LLM（llama.cpp），Phi3、llama3 都可以直接一个节点运行了。模型下载后，放置到 `models/llamafile/`
+<!-- - ChatGPT 节点支持 Local LLM（llama.cpp），Phi3、llama3 都可以直接一个节点运行了。模型下载后，放置到 `models/llamafile/` -->
 
-- 右键菜单支持 text-to-text，方便对 prompt 词补全
-
+<!-- - 右键菜单支持 text-to-text，方便对 prompt 词补全 -->
+<!-- 
 强烈推荐：
 [Phi-3-mini-4k-instruct-function-calling-GGUF](https://huggingface.co/nold/Phi-3-mini-4k-instruct-function-calling-GGUF)
 
@@ -21,10 +34,12 @@
 - 右键菜单支持 image-to-text，使用多模态模型，多模态使用 [llava-phi-3-mini-gguf](https://huggingface.co/xtuner/llava-phi-3-mini-gguf/tree/main)，注意需要把llava-phi-3-mini-mmproj-f16.gguf也下载
 
 ![](./assets/prompt_ai_setup.png)
-![](./assets/prompt-ai.png)
+![](./assets/prompt-ai.png) -->
 
 
 #### `相关插件推荐`
+
+[comfyui-liveportrait](https://github.com/shadowcz007/comfyui-liveportrait)
 
 [Comfyui-ChatTTS](https://github.com/shadowcz007/Comfyui-ChatTTS)
 
@@ -46,6 +61,7 @@
 - web app 可以设置分类，在 comfyui 右键菜单可以编辑更新 web app
 - 支持动态提示
 - 支持把输出显示到comfyui背景（TouchDesigner 风格）
+- 如果转为web app打开是空白的，注意检查下插件目录的名字需要是：comfyui-mixlab-nodes(如果是zip包下载会多了个-main的后缀，需要去掉)
 
 ![](./assets/微信图片_20240421205440.png)
 
@@ -104,15 +120,20 @@ https://github.com/shadowcz007/comfyui-mixlab-nodes/assets/12645064/e7e77f90-e43
 
 [Voice + Real-time Face Swap Workflow](./workflow/语音+实时换脸workflow.json)
 
+- Preview Audio
+
+[text-to-audio](./workflow/text-to-audio-base-workflow.json)
+
 ### GPT
 
-> Support for calling multiple GPTs.Local LLM（llama.cpp）、 ChatGPT、ChatGLM3 、ChatGLM4 , Some code provided by rui. If you are using OpenAI's service, fill in https://api.openai.com/v1 . If you are using a local LLM service, fill in http://127.0.0.1:xxxx/v1 . Azure OpenAI:https://xxxx.openai.azure.com
+> Support for calling multiple GPTs.Local LLM 、 ChatGPT、ChatGLM3 、ChatGLM4 , Some code provided by rui. If you are using OpenAI's service, fill in https://api.openai.com/v1 . If you are using a local LLM service, fill in http://127.0.0.1:xxxx/v1 . Azure OpenAI:https://xxxx.openai.azure.com
 
-![gpt-workflow.svg](./assets/gpt-workflow.svg)
+[LLM_base_workflow](./workflow/LLM_base_workflow.json)
 
-[workflow-5](./workflow/5-gpt-workflow.json)
+- SiliconflowLLM
+- ChatGPTOpenAI
 
-最新：ChatGPT 节点支持 Local LLM（llama.cpp），Phi3、llama3 都可以直接一个节点运行了。
+<!-- 最新：ChatGPT 节点支持 Local LLM（llama.cpp），Phi3、llama3 都可以直接一个节点运行了。
 
 Model download,move to :`models/llamafile/`
 
@@ -140,7 +161,7 @@ pip install 'llama-cpp-python[server]'
 ```
 pip install llama-cpp-python \
   --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/metal
-```
+``` -->
 
 ## Prompt
 
@@ -244,9 +265,13 @@ Add edges to an image.
 
 ![FeatheredMask](./assets/FlVou_Y6kaGWYoEj1Tn0aTd4AjMI.jpg)
 
-> LaMaInpainting
+> LaMaInpainting（需要手动安装）
+
+*  simple-lama-inpainting 里的pillow造成冲突，暂时从依赖里移除，如果有安装 simple-lama-inpainting ，节点会自动添加，没有，则不会自动添加。
 
 from [simple-lama-inpainting](https://github.com/enesmsahin/simple-lama-inpainting)
+
+* [问题汇总](https://github.com/shadowcz007/comfyui-mixlab-nodes/issues/294)
 
 > rembgNode
 

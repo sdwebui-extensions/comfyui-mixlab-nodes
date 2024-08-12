@@ -3,7 +3,8 @@ import { $el } from '../../../scripts/ui.js'
 import { api } from '../../../scripts/api.js'
 
 import { td_bg } from './td_background.js'
-console.log('td_bg', td_bg)
+// console.log('td_bg', td_bg)
+
 //本机安装的插件节点全集
 window._nodesAll = null
 
@@ -256,7 +257,9 @@ async function extractInputAndOutputData (
         node.type === 'KSampler' ||
         node.type == 'SamplerCustom' ||
         node.type === 'ChinesePrompt_Mix' ||
-        node.type === 'Seed_'
+        node.type === 'Seed_'||
+        node.type==='SiliconflowLLM'||
+        node.type==='ChatGPTOpenAI'
       ) {
         // seed 的类型收集
         try {
@@ -418,7 +421,7 @@ async function save (json, download = false, showInfo = true) {
 
 function getInputsAndOutputs () {
   const inputs =
-      `LoadImage LoadImagesToBatch ImagesPrompt_ LoadAndCombinedAudio_ VHS_LoadVideo CLIPTextEncode PromptSlide TextInput_ Color FloatSlider IntNumber CheckpointLoaderSimple LoraLoader`.split(
+      `LoadImage LoadImagesToBatch ImagesPrompt_ LoadAndCombinedAudio_ LoadVideoAndSegment_ VHS_LoadVideo CLIPTextEncode PromptSlide TextInput_ Color FloatSlider IntNumber CheckpointLoaderSimple LoraLoader`.split(
         ' '
       ),
     outputs =
@@ -466,19 +469,18 @@ app.registerExtension({
         const { input, output } = getInputsAndOutputs()
         input_ids.value = input.join('\n')
         output_ids.value = output.join('\n')
-
         const widget = {
           type: 'div',
           name: 'AppInfoRun',
           draw (ctx, node, widget_width, y, widget_height) {
             Object.assign(
               this.div.style,
-              get_position_style(
+              {...get_position_style(
                 ctx,
                 widget_width,
                 node.size[1] - widget_height,
                 node.size[1]
-              )
+              ),zIndex:1}
             )
           }
         }

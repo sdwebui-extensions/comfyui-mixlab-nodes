@@ -8,6 +8,7 @@ from PIL.PngImagePlugin import PngInfo
 import base64,os,random
 from io import BytesIO
 import folder_paths
+import node_helpers
 import json,io
 import comfy.utils
 from comfy.cli_args import args
@@ -30,17 +31,20 @@ def opencv_to_pil(image):
     return pil_image
 
 # 列出目录下面的所有文件
-def get_files_with_extension(directory, extension):
+def get_files_with_extension(directory, extensions):
     file_list = []
+    # 确保extensions参数是一个list，即使只有一个元素
+    if not isinstance(extensions, (tuple, list)):
+        extensions = [extensions]
     for root, dirs, files in os.walk(directory):
+        # print(f"Files at {root}: {files}")  # 确认files是一个字符串列表
         for file in files:
-            if file.endswith(extension):
-                file = os.path.splitext(file)[0]
-                file_path = os.path.join(root, file)
-                file_name = os.path.relpath(file_path, directory)
-                file_list.append(file_name)
+            # 检查文件是否以任何一个提供的扩展名结尾
+            if any(file.endswith(ext) for ext in extensions):
+                # 直接将文件名添加到列表中
+                file_list.append(file)
     return file_list
-
+	
 def composite_images(foreground, background, mask, is_multiply_blend=False, position="overall", scale=0.25):
     width, height = foreground.size
     bg_image = background
@@ -161,7 +165,7 @@ class AnyType(str):
 any_type = AnyType("*")
 
 
-FONT_PATH= os.path.abspath(os.path.join(os.path.dirname(__file__),'../assets/fonts'))
+FONT_PATH= os.path.abspath(os.path.join(os.path.dirname(__file__),"..","assets","fonts"))
 
 
 MAX_RESOLUTION=8192
@@ -487,6 +491,53 @@ def load_image(fp,white_bg=False):
         })
         
     return images
+
+
+# 读取图片数据，转成tensor
+def load_image_to_tensor( image):
+    image_path = folder_paths.get_annotated_filepath(image)
+        
+    img = node_helpers.pillow(Image.open, image_path)
+        
+    output_images = []
+    output_masks = []
+    w, h = None, None
+
+    excluded_formats = ['MPO']
+        
+    for i in ImageSequence.Iterator(img):
+        i = node_helpers.pillow(ImageOps.exif_transpose, i)
+
+        if i.mode == 'I':
+            i = i.point(lambda i: i * (1 / 255))
+        image = i.convert("RGB")
+
+        if len(output_images) == 0:
+            w = image.size[0]
+            h = image.size[1]
+            
+        if image.size[0] != w or image.size[1] != h:
+            continue
+            
+        image = np.array(image).astype(np.float32) / 255.0
+        image = torch.from_numpy(image)[None,]
+        if 'A' in i.getbands():
+            mask = np.array(i.getchannel('A')).astype(np.float32) / 255.0
+            mask = 1. - torch.from_numpy(mask)
+        else:
+            mask = torch.zeros((64,64), dtype=torch.float32, device="cpu")
+        output_images.append(image)
+        output_masks.append(mask.unsqueeze(0))
+
+    if len(output_images) > 1 and img.format not in excluded_formats:
+        output_image = torch.cat(output_images, dim=0)
+        output_mask = torch.cat(output_masks, dim=0)
+    else:
+        output_image = output_images[0]
+        output_mask = output_masks[0]
+
+    return (output_image, output_mask)
+
 
 def load_image_and_mask_from_url(url, timeout=10):
     # Load the image from the URL
@@ -909,7 +960,7 @@ def resize_image(layer_image, scale_option, width, height,color="white"):
     return layer_image
 
 
-def generate_text_image(text, font_path, font_size, text_color, vertical=True, stroke=False, stroke_color=(0, 0, 0), stroke_width=1, spacing=0, padding=4):
+def generate_text_image(text, font_path, font_size, text_color, vertical=True, stroke=False, stroke_color=(0, 0, 0), stroke_width=1, spacing=0, line_spacing=0,padding=4):
     # Split text into lines based on line breaks
     lines = text.split("\n")
 
@@ -935,9 +986,13 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
                 char_coordinates.append((x, y))
                 y += char_height + spacing
                 max_height = max(max_height, y + padding)
-            x += max_char_width + spacing
+            x += max_char_width + line_spacing
             y = padding
         max_width = x
+        total_line_width = sum(font.getsize(line)[1] for line in lines)
+        total_spacing = line_spacing * (len(lines) - 1)
+        # 确保左边和右边的padding都被计入max_width
+        max_width = total_line_width + total_spacing + padding * 2
     else:
         for line in lines:
             line_width, line_height = font.getsize(line)
@@ -946,9 +1001,13 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
                 char_coordinates.append((x, y))
                 x += char_width + spacing
                 max_width = max(max_width, x + padding)
-            y += line_height + spacing
+            y += line_height + line_spacing
             x = padding
-        max_height = y
+        # max_height = y
+        total_line_heights = sum(font.getsize(line)[1] for line in lines)
+        total_spacing = line_spacing * (len(lines) - 1)
+        # 确保顶部和底部的padding都被计入max_height
+        max_height = total_line_heights + total_spacing + padding * 2
 
     # 3. Create image with calculated width and height
     image = Image.new('RGBA', (max_width, max_height), (255, 255, 255, 0))
@@ -1288,6 +1347,9 @@ class LoadImages_:
             image=pil2tensor(image)
             ims.append(image)
 
+        if len(ims)==0:
+            image1 = Image.new('RGB', (512, 512), color='black')
+            return (pil2tensor(image1),)
         image1 = ims[0]
         for image2 in ims[1:]:
             if image1.shape[1:] != image2.shape[1:]:
@@ -1498,25 +1560,32 @@ class TextImage:
         return {"required": { 
             
                     "text": ("STRING",{"multiline": True,"default": "龍馬精神迎新歲","dynamicPrompts": False}),
-                    "font": (get_files_with_extension(FONT_PATH,'.ttf'),),#后缀为 ttf
+                    "font": (get_files_with_extension(FONT_PATH,['.ttf','.otf']),),#后缀为 ttf
                     "font_size": ("INT",{
                                 "default":100, 
-                                "min": 100, #Minimum value
-                                "max": 1000, #Maximum value
+                                "min": 1, #Minimum value
+                                "max": 10000000, #Maximum value
                                 "step": 1, #Slider's step
                                 "display": "number" # Cosmetic only: display as "number" or "slider"
                                 }), 
                     "spacing": ("INT",{
                                 "default":12, 
-                                "min": -200, #Minimum value
-                                "max": 200, #Maximum value
+                                "min": -2000000000, #Minimum value
+                                "max": 2000000000, #Maximum value
+                                "step": 1, #Slider's step
+                                "display": "number" # Cosmetic only: display as "number" or "slider"
+                                }), 
+                    "line_spacing": ("INT",{
+                                "default":12, 
+                                "min": -2000000000, #Minimum value
+                                "max": 2000000000, #Maximum value
                                 "step": 1, #Slider's step
                                 "display": "number" # Cosmetic only: display as "number" or "slider"
                                 }), 
                     "padding": ("INT",{
                                 "default":8, 
                                 "min": 0, #Minimum value
-                                "max": 200, #Maximum value
+                                "max": 2000000000, #Maximum value
                                 "step": 1, #Slider's step
                                 "display": "number" # Cosmetic only: display as "number" or "slider"
                                 }), 
@@ -1536,14 +1605,14 @@ class TextImage:
     INPUT_IS_LIST = False
     OUTPUT_IS_LIST = (False,False,)
 
-    def run(self,text,font,font_size,spacing,padding,text_color,vertical,stroke):
+    def run(self,text,font,font_size,spacing,line_spacing,padding,text_color,vertical,stroke):
         
-        font_path=os.path.join(FONT_PATH,font+'.ttf')
+        font_path=os.path.join(FONT_PATH,font)
 
         if text=="":
             text=" "
         # stroke=False, stroke_color=(0, 0, 0), stroke_width=1, spacing=0
-        img,mask=generate_text_image(text,font_path,font_size,text_color,vertical,stroke,(0, 0, 0),1,spacing,padding)
+        img,mask=generate_text_image(text,font_path,font_size,text_color,vertical,stroke,(0, 0, 0),1,spacing,line_spacing,padding)
         
         img=pil2tensor(img)
         mask=pil2tensor(mask)
@@ -1577,7 +1646,7 @@ class LoadImagesFromURL:
 
     def run(self,url,seed=0):
         global urls_image
-        print(urls_image)
+        # print(urls_image)
         def filter_http_urls(urls):
             filtered_urls = []
             for url in urls.split('\n'):
@@ -1666,28 +1735,51 @@ class Image3D:
     def run(self,upload,material=None):
         # print('material',material)
         # print(upload )
-        image = base64_to_image(upload['image'])
 
-        mat=None
-        if 'material' in upload and upload['material']:
-            mat=base64_to_image(upload['material'])
-            mat=mat.convert('RGB')
-            mat=pil2tensor(mat)
+        # 截取的系列角度截图
+        images=upload['images'] if "images" in upload else []
 
-        mask = image.split()[3]
-        image=image.convert('RGB')
+        ims=[]
+        for im in images:
+            if 'type' in im and (not f"[{im['type']}]" in im['name']):
+                im['name']=im['name']+" "+f"[{im['type']}]"
+            output_image, output_mask = load_image_to_tensor(im['name'])
+            ims.append(output_image)
         
-        mask=mask.convert('L')
-
+        
+        mask=None
         bg_image=None
-        if 'bg_image' in upload and upload['bg_image']:
-            bg_image = base64_to_image(upload['bg_image'])
-            bg_image=bg_image.convert('RGB')
-            bg_image=pil2tensor(bg_image)
+        mat=None
+
+        # 如果没有系列截图
+        if len(ims)==0:
+            # 这个是3d模型当前截图
+            image = base64_to_image(upload['image'])
+
+            
+            if 'material' in upload and upload['material']:
+                mat=base64_to_image(upload['material'])
+                mat=mat.convert('RGB')
+                mat=pil2tensor(mat)
+
+            mask = image.split()[3]
+            image=image.convert('RGB')
+            
+            mask=mask.convert('L')
+
+            
+            if 'bg_image' in upload and upload['bg_image']:
+                bg_image = base64_to_image(upload['bg_image'])
+                bg_image=bg_image.convert('RGB')
+                bg_image=pil2tensor(bg_image)
 
 
-        mask=pil2tensor(mask)
-        image=pil2tensor(image)
+            mask=pil2tensor(mask)
+            image=pil2tensor(image)
+        else:
+            
+            image = torch.cat(ims, dim=0)
+
         
         m=[]
         if not material is None:
@@ -1808,12 +1900,9 @@ class CompositeImages:
 
     def run(self, foreground,mask,background, is_multiply_blend, position, scale):
         results = []
-        
         f1=[]
         for fg, mask in zip(foreground, mask ):
             f1.append([fg,mask])
-
-        
         for f, bg in product(f1, background):
             [fg,mask]=f
             fg_pil = tensor2pil(fg)
@@ -3202,3 +3291,95 @@ class ImageListToBatch_:
         out = torch.cat(out, dim=0)
 
         return (out,)
+
+
+# https://github.com/gokayfem/ComfyUI-Depth-Visualization?tab=readme-ov-file
+class DepthViewer_:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "depth_map": ("IMAGE",),
+
+            },
+             "optional":{
+                  "frames":("IMAGEBASE64",), 
+                },
+        }
+
+    def __init__(self):
+        self.saved_reference = []
+        self.saved_depth = []
+
+        self.full_output_folder,self.filename,self.counter, self.subfolder, self.filename_prefix = folder_paths.get_save_image_path(
+            "imagesave", 
+            folder_paths.get_output_directory())
+
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("frames",)
+    
+    OUTPUT_NODE = True
+
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (False,)
+
+    FUNCTION = "run"
+    CATEGORY = "♾️Mixlab/3D"
+    def run(self, image, depth_map,frames=None):
+        self.saved_reference.clear()
+        self.saved_depth.clear()
+        image = image[0].detach().cpu().numpy()
+        depth = depth_map[0].detach().cpu().numpy()
+
+        image = Image.fromarray(np.clip(255. * image, 0, 255).astype(np.uint8)).convert('RGB')
+        depth = Image.fromarray(np.clip(255. * depth, 0, 255).astype(np.uint8))
+
+        return self.display([image], [depth],frames)
+
+    def display(self, reference_image, depth_map,frames):
+        for (batch_number, (single_image, single_depth)) in enumerate(zip(reference_image, depth_map)):
+            filename_with_batch_num = self.filename.replace("%batch_num%", str(batch_number))
+
+            image_file = f"{filename_with_batch_num}_{self.counter:05}_reference.png"
+            single_image.save(os.path.join(self.full_output_folder, image_file))
+
+            depth_file = f"{filename_with_batch_num}_{self.counter:05}_depth.png"
+            single_depth.save(os.path.join(self.full_output_folder, depth_file))
+
+            self.saved_reference.append({
+                "filename": image_file,
+                "subfolder": self.subfolder,
+                "type": "output"
+            })
+
+            self.saved_depth.append({
+                "filename": depth_file,
+                "subfolder": self.subfolder,
+                "type": "output"
+            })
+            self.counter += 1
+
+
+        ims=[]
+        image1 = Image.new('RGB', (512, 512), color='black')
+        image1=pil2tensor(image1)
+
+        if frames!=None:
+            for im in frames['images']:
+                # print(im)
+                if 'type' in im and (not f"[{im['type']}]" in im['name']):
+                    im['name']=im['name']+" "+f"[{im['type']}]"
+                    
+                output_image, output_mask = load_image_to_tensor(im['name'])
+                ims.append(output_image)
+
+            if len(ims)>0:
+                image1 = ims[0]
+                for image2 in ims[1:]:
+                    if image1.shape[1:] != image2.shape[1:]:
+                        image2 = comfy.utils.common_upscale(image2.movedim(-1, 1), image1.shape[2], image1.shape[1], "bilinear", "center").movedim(1, -1)
+                    image1 = torch.cat((image1, image2), dim=0)
+
+        return {"ui": {"reference_image": self.saved_reference, "depth_map": self.saved_depth}, "result": (image1,)}

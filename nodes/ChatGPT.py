@@ -6,14 +6,69 @@ import folder_paths
 import hashlib
 import codecs,sys
 import importlib.util
+import subprocess
+
+python = sys.executable
+
+# 从文本中提取json
+def extract_json_strings(text):
+    json_strings = []
+    brace_level = 0
+    json_str = ''
+    in_json = False
+    
+    for char in text:
+        if char == '{':
+            brace_level += 1
+            in_json = True
+        if in_json:
+            json_str += char
+        if char == '}':
+            brace_level -= 1
+        if in_json and brace_level == 0:
+            json_strings.append(json_str)
+            json_str = ''
+            in_json = False
+
+    return json_strings[0] if len(json_strings)>0 else "{}"
 
 
-def is_installed(package):
+def is_installed(package, package_overwrite=None,auto_install=True):
+    is_has=False
     try:
         spec = importlib.util.find_spec(package)
+        is_has=spec is not None
     except ModuleNotFoundError:
-        return False
-    return spec is not None
+        pass
+
+    package = package_overwrite or package
+
+    if spec is None:
+        if auto_install==True:
+            print(f"Installing {package}...")
+            # 清华源 -i https://pypi.tuna.tsinghua.edu.cn/simple
+            command = f'"{python}" -m pip install {package}'
+    
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=os.environ)
+
+            is_has=True
+
+            if result.returncode != 0:
+                print(f"Couldn't install\nCommand: {command}\nError code: {result.returncode}")
+                is_has=False
+    else:
+        print(package+'## OK')
+
+    return is_has
+  
+
+
+# def is_installed(package):
+#     try:
+#         spec = importlib.util.find_spec(package)
+#     except ModuleNotFoundError:
+#         return False
+#     return spec is not None
 
 
 def get_unique_hash(string):
@@ -53,30 +108,14 @@ def azure_client(key,url):
 
 def openai_client(key,url):
     client = openai.OpenAI(
-    api_key=key,
-    base_url=url
+        api_key=key,
+        base_url=url
     )
     return client
 
 def ZhipuAI_client(key):
-
     try:
-        if is_installed('zhipuai')==False:
-            import subprocess
-
-            # 安装
-            print('#pip install zhipuai')
-
-            result = subprocess.run([sys.executable, '-s', '-m', 'pip', 'install', 'zhipuai'], capture_output=True, text=True)
-
-            #检查命令执行结果
-            if result.returncode == 0:
-                print("#install success")
-                from zhipuai import ZhipuAI
-            else:
-                print("#install error")
-            
-        else:
+        if is_installed('zhipuai')==True:
             from zhipuai import ZhipuAI
     except:
         print("#install zhipuai error")
@@ -97,73 +136,76 @@ def get_llama_path():
     except:
         return os.path.join(folder_paths.models_dir, "llamafile")
 
-def get_llama_models():
-    res=[]
+# def get_llama_models():
+#     res=[]
 
-    model_path=get_llama_path()
-    if os.path.exists(model_path):
-        files = os.listdir(model_path)
-        for file in files:
-            if os.path.isfile(os.path.join(model_path, file)):
-                res.append(file)
-        res=phi_sort(res)
-    return res
+#     model_path=get_llama_path()
+#     if os.path.exists(model_path):
+#         files = os.listdir(model_path)
+#         for file in files:
+#             if os.path.isfile(os.path.join(model_path, file)):
+#                 res.append(file)
+#         res=phi_sort(res)
+#     return res
 
-llama_modes_list=get_llama_models()
+# llama_modes_list=get_llama_models()
+# llama_modes_list=[]
 
-def get_llama_model_path(file_name):
-    model_path=get_llama_path()
-    mp=os.path.join(model_path,file_name)
-    return mp
+# def get_llama_model_path(file_name):
+#     model_path=get_llama_path()
+#     mp=os.path.join(model_path,file_name)
+#     return mp
 
-def llama_cpp_client(file_name):
-    try:
-        if is_installed('llama_cpp')==False:
-            import subprocess
+# def llama_cpp_client(file_name):
+#     try:
+#         if is_installed('llama_cpp')==False:
+#             import subprocess
 
-            # 安装
-            print('#pip install llama-cpp-python')
+#             # 安装
+#             print('#pip install llama-cpp-python')
  
-            result = subprocess.run([sys.executable, '-s', '-m', 'pip', 
-                                     'install', 
-                                     'llama-cpp-python',
-                                     '--extra-index-url',
-                                     'https://abetlen.github.io/llama-cpp-python/whl/cu121'
-                                     ], capture_output=True, text=True)
+#             result = subprocess.run([sys.executable, '-s', '-m', 'pip', 
+#                                      'install', 
+#                                      'llama-cpp-python',
+#                                      '--extra-index-url',
+#                                      'https://abetlen.github.io/llama-cpp-python/whl/cu121'
+#                                      ], capture_output=True, text=True)
 
-            #检查命令执行结果
-            if result.returncode == 0:
-                print("#install success")
-                from llama_cpp import Llama
+#             #检查命令执行结果
+#             if result.returncode == 0:
+#                 print("#install success")
+#                 from llama_cpp import Llama
 
-                subprocess.run([sys.executable, '-s', '-m', 'pip', 
-                                     'install', 
-                                     'llama-cpp-python[server]'
-                                     ], capture_output=True, text=True)
+#                 subprocess.run([sys.executable, '-s', '-m', 'pip', 
+#                                      'install', 
+#                                      'llama-cpp-python[server]'
+#                                      ], capture_output=True, text=True)
 
-            else:
-                print("#install error")
+#             else:
+#                 print("#install error")
             
-        else:
-            from llama_cpp import Llama
-    except:
-        print("#install llama-cpp-python error")
+#         else:
+#             from llama_cpp import Llama
+#     except:
+#         print("#install llama-cpp-python error")
 
-    if file_name:
-        mp=get_llama_model_path(file_name)
-        # file_name=get_llama_models()[0]
-        # model_path=os.path.join(folder_paths.models_dir, "llamafile")
-        # mp=os.path.join(model_path,file_name)
+#     if file_name:
+#         mp=get_llama_model_path(file_name)
+#         # file_name=get_llama_models()[0]
+#         # model_path=os.path.join(folder_paths.models_dir, "llamafile")
+#         # mp=os.path.join(model_path,file_name)
 
-        llm = Llama(model_path=mp, chat_format="chatml",n_gpu_layers=-1,n_ctx=512)
+#         llm = Llama(model_path=mp, chat_format="chatml",n_gpu_layers=-1,n_ctx=512)
 
-        return llm
+#         return llm
 
-    
+
+if is_installed('json_repair'):
+    from json_repair import repair_json
 
 
 def chat(client, model_name,messages ):
-
+        print('#chat',model_name,messages)
         try_count = 0
         while True:
             try_count += 1
@@ -206,6 +248,36 @@ def chat(client, model_name,messages ):
         return content
 
 
+llm_apis=[
+            {
+                "value": "https://api.openai.com/v1",
+                "label": "openai"
+            },
+            {
+                "value": "https://openai.api2d.net/v1",
+                "label": "api2d"
+            },
+            # {
+            #     "value": "https://docs-test-001.openai.azure.com",
+            #     "label": "https://docs-test-001.openai.azure.com"
+            # },
+             
+            {
+                "value": "https://api.moonshot.cn/v1",
+                "label": "Kimi"
+            },
+            {
+                "value": "https://api.deepseek.com/v1",
+                "label": "DeepSeek-V2"
+            },
+            {
+                "value": "https://api.siliconflow.cn/v1",
+                "label": "SiliconCloud"
+            }]
+        
+llm_apis_dict = {api["label"]: api["value"] for api in llm_apis}
+
+
 class ChatGPTNode:
     def __init__(self):
         # self.__client = OpenAI()
@@ -215,8 +287,9 @@ class ChatGPTNode:
 
     @classmethod
     def INPUT_TYPES(cls):
-        model_list=llama_modes_list+[ 
-                    "gpt-3.5-turbo",
+
+        model_list=[ 
+            "gpt-3.5-turbo",
             "gpt-3.5-turbo-16k",
             "gpt-4o",
             "gpt-4o-2024-05-13",
@@ -236,27 +309,38 @@ class ChatGPTNode:
             "moonshot-v1-8k",
             "moonshot-v1-32k",
             "moonshot-v1-128k",
-            "deepseek-chat" 
+            "deepseek-chat",
+            "Qwen/Qwen2-7B-Instruct",
+            "THUDM/glm-4-9b-chat",
+            "01-ai/Yi-1.5-9B-Chat-16K",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct"
                     ]
+        
         return {
             "required": {
-                "api_key":("KEY", {"default": "", "multiline": True,"dynamicPrompts": False}),
-                "api_url":("URL", {"default": "", "multiline": True,"dynamicPrompts": False}),
+                # "api_key":("KEY", {"default": "", "multiline": True,"dynamicPrompts": False}),
+                # "api_key":("STRING", {"forceInput": True,}),
+               
                 "prompt": ("STRING", {"multiline": True,"dynamicPrompts": False}),
                 "system_content": ("STRING", 
                                    {
                                        "default": "You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible.", 
                                        "multiline": True,"dynamicPrompts": False
                                        }),
+                 
                 "model": ( model_list, 
                     {"default": model_list[0]}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "step": 1}),
                 "context_size":("INT", {"default": 1, "min": 0, "max":30, "step": 1}),
+                "api_url":(list(llm_apis_dict.keys()), 
+                    {"default": list(llm_apis_dict.keys())[0]}),
             },
-             "hidden": {
-                "unique_id": "UNIQUE_ID",
-                "extra_pnginfo": "EXTRA_PNGINFO",
-            },
+             "optional":{
+                    "api_key":("STRING", {"forceInput": True,}),
+                    "custom_model_name":("STRING", {"forceInput": True,}), #适合自定义model
+                     "custom_api_url":("STRING", {"forceInput": True,}), #适合自定义model
+                },
+             
         }
 
     RETURN_TYPES = ("STRING","STRING","STRING",)
@@ -268,12 +352,29 @@ class ChatGPTNode:
 
     
     def generate_contextual_text(self,
-                                 api_key,
-                                 api_url, 
+                                #  api_key,
                                  prompt, 
                                  system_content,
-                                model, 
-                                seed,context_size,unique_id = None, extra_pnginfo=None):
+                                 model, 
+                                seed,
+                                context_size,
+                                api_url,
+                                api_key=None,
+                                custom_model_name=None,
+                                custom_api_url=None,
+                                ):
+        
+        if custom_model_name!=None:
+            model=custom_model_name
+
+        api_url=llm_apis_dict[api_url] if api_url in llm_apis_dict else ""
+
+        if custom_api_url!=None:
+            api_url=custom_api_url
+
+        if api_key==None:
+            api_key="lm_studio"
+
         # print(api_key!='',api_url,prompt,system_content,model,seed)
         # 可以选择保留会话历史以维持上下文记忆
         # 或者在此处清除会话历史 self.session_history.clear()
@@ -286,7 +387,7 @@ class ChatGPTNode:
             self.system_content=system_content
             # self.session_history=[]
             # self.session_history.append({"role": "system", "content": system_content})
-        
+        print("api_key,api_url",api_key,api_url)
         # 
         if is_azure_url(api_url):
             client=azure_client(api_key,api_url)
@@ -295,12 +396,12 @@ class ChatGPTNode:
             if model == "glm-4" :
                 client = ZhipuAI_client(api_key)  # 使用 Zhipuai 的接口
                 print('using Zhipuai interface')
-            elif model in llama_modes_list:
-                #
-                client=llama_cpp_client(model)
+            # elif model in llama_modes_list:
+            #     #
+            #     client=llama_cpp_client(model)
             else :
                 client = openai_client(api_key,api_url)  # 使用 ChatGPT  的接口
-                print('using ChatGPT interface')
+                # print('using ChatGPT interface',api_key,api_url)
 
         # 把用户的提示添加到会话历史中
         # 调用API时传递整个会话历史
@@ -316,6 +417,7 @@ class ChatGPTNode:
         session_history=crop_list_tail(self.session_history,context_size)
 
         messages=[{"role": "system", "content": self.system_content}]+session_history+[{"role": "user", "content": prompt}]
+
         response_content = chat(client,model,messages)
         
         self.session_history=self.session_history+[{"role": "user", "content": prompt}]+[{'role':'assistant',"content":response_content}]
@@ -334,6 +436,93 @@ class ChatGPTNode:
         #                            context_size]
         
         return (response_content,json.dumps(messages, indent=4),json.dumps(self.session_history, indent=4),)
+
+
+class SiliconflowFreeNode:
+    def __init__(self):
+        # self.__client = OpenAI()
+        self.session_history = []  # 用于存储会话历史的列表
+        # self.seed=0
+        self.system_content="You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible."
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        model_list= [ 
+            "Qwen/Qwen2-7B-Instruct",
+            "THUDM/glm-4-9b-chat",
+            "01-ai/Yi-1.5-9B-Chat-16K",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct"
+            ]
+        return {
+            "required": {
+                "api_key":("STRING", {"forceInput": True,}),
+                "prompt": ("STRING", {"multiline": True,"dynamicPrompts": False}),
+                "system_content": ("STRING", 
+                                   {
+                                       "default": "You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible.", 
+                                       "multiline": True,"dynamicPrompts": False
+                                       }),
+                "model": ( model_list, 
+                    {"default": model_list[0]}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "step": 1}),
+                "context_size":("INT", {"default": 1, "min": 0, "max":30, "step": 1}),
+            },
+               "optional":{
+                    "custom_model_name":("STRING", {"forceInput": True,}), #适合自定义model
+                }, 
+        }
+
+    RETURN_TYPES = ("STRING","STRING","STRING",)
+    RETURN_NAMES = ("text","messages","session_history",)
+    FUNCTION = "generate_contextual_text"
+    CATEGORY = "♾️Mixlab/GPT"
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (False,False,False,)
+
+    
+    def generate_contextual_text(self,
+                                 api_key,
+                                 prompt, 
+                                 system_content,
+                                model, 
+                                seed,context_size,custom_model_name=None):
+
+        if custom_model_name!=None:
+            model=custom_model_name
+
+        api_url="https://api.siliconflow.cn/v1"
+        
+        # 把系统信息和初始信息添加到会话历史中
+        if system_content:
+            self.system_content=system_content
+            # self.session_history=[]
+            # self.session_history.append({"role": "system", "content": system_content})
+        
+        # 
+        client = openai_client(api_key,api_url)  # 使用 ChatGPT  的接口
+        # print('using ChatGPT interface',api_key,api_url)
+
+        # 把用户的提示添加到会话历史中
+        # 调用API时传递整个会话历史
+
+        def crop_list_tail(lst, size):
+            if size >= len(lst):
+                return lst
+            elif size==0:
+                return []
+            else:
+                return lst[-size:]
+            
+        session_history=crop_list_tail(self.session_history,context_size)
+
+        messages=[{"role": "system", "content": self.system_content}]+session_history+[{"role": "user", "content": prompt}]
+
+        response_content = chat(client,model,messages)
+        
+        self.session_history=self.session_history+[{"role": "user", "content": prompt}]+[{'role':'assistant',"content":response_content}]
+
+        return (response_content,json.dumps(messages, indent=4),json.dumps(self.session_history, indent=4),)
+
 
 
 
@@ -497,3 +686,41 @@ class TextSplitByDelimiter:
         arr= arr[start_index:start_index + max_count * (skip_every+1):(skip_every+1)]
 
         return (arr,)
+
+
+class JsonRepair:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                 "json_string":("STRING", {"forceInput": True,}), 
+                 "key":("STRING", {"multiline": False,"dynamicPrompts": False,"default": ""}),
+            }
+        }
+
+    INPUT_IS_LIST = False
+    RETURN_TYPES = ("STRING","STRING",)
+    RETURN_NAMES = ("json_string","value",)
+    FUNCTION = "run"
+    # OUTPUT_NODE = True
+    OUTPUT_IS_LIST = (False,False,)
+
+    CATEGORY = "♾️Mixlab/GPT"
+
+    def run(self, json_string,key=""):
+
+        json_string=extract_json_strings(json_string)
+        # print(json_string)
+        good_json_string = repair_json(json_string)
+
+        # 将 JSON 字符串解析为 Python 对象
+        data = json.loads(good_json_string)
+
+        v=""
+        if key!="" and (key in data):
+            v=data[key]
+
+        # 将 Python 对象转换回 JSON 字符串，确保中文字符不被转义
+        json_str_with_chinese = json.dumps(data, ensure_ascii=False)
+
+        return (json_str_with_chinese,v,)

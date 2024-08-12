@@ -133,7 +133,7 @@ def get_font_files(directory):
 
     return font_files
 
-r_directory = os.path.join(os.path.dirname(__file__), '../assets/')
+r_directory = os.path.join(os.path.dirname(__file__), '..','assets','/')
 
 font_files = get_font_files(r_directory)
 # print(font_files)
@@ -179,6 +179,28 @@ class ColorInput:
         b=color['b']
         a=color['a']
         return (h,r,g,b,a,)
+
+
+class KeyInput:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { 
+                    "key":("KEY",), 
+                             },
+                }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("key",)
+
+    FUNCTION = "run"
+
+    CATEGORY = "♾️Mixlab/Input"
+
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (False,)
+
+    def run(self,key):
+        return (key,)
 
 
 

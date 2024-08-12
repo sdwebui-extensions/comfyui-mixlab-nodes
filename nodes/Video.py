@@ -179,6 +179,9 @@ def split_video(video_path, video_segment_frames, transition_frames, output_dir)
         
         # 打印当前片段的起始帧和结束帧
         print(f"Segment {i+1}: Start Frame {start_frame}, End Frame {end_frame}")
+
+        if end_frame<start_frame:
+            break
         
         # 保存当前片段为一个视频文件
         segment_video_path = f"{output_dir}/segment_{i+1}.avi"
@@ -187,6 +190,7 @@ def split_video(video_path, video_segment_frames, transition_frames, output_dir)
         segment_video = cv2.VideoWriter(segment_video_path, fourcc, fps, (int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
                                                               int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))))
         
+
         for frame_num in range(start_frame, end_frame):
             ret, frame = video_capture.read()
             if ret:
@@ -541,20 +545,24 @@ class LoadAndCombinedAudio_:
         if duration > -1:
             crop_audio(audio_file, start_time, duration)
 
-        return (audio_file, {
-                "filename": audio_file_name,
-                "subfolder": "",
-                "type": "output",
-                "audio_path":audio_file
-                } ,)
+        waveform, sample_rate = torchaudio.load(audio_file)
+        audio = {
+            "filename": audio_file_name,
+            "subfolder": "",
+            "type": "output",
+            "audio_path":audio_file,
+            "waveform": waveform.unsqueeze(0), 
+            "sample_rate": sample_rate}
+
+        return (audio_file,audio ,)
 
 class CombineAudioVideo:
     @classmethod
     def INPUT_TYPES(s):
        
         return {"required": {
-                     "video_file_path": ("STRING",  {"forceInput": True}),
-                     "audio_file_path": ("STRING",  {"forceInput": True}), 
+                     "video": ("SCENE_VIDEO",),
+                     "audio": ("AUDIO", ), 
                      },
                 }
 
@@ -562,23 +570,46 @@ class CombineAudioVideo:
 
     OUTPUT_NODE = True
     FUNCTION = "run" 
-    RETURN_TYPES = ()
-    RETURN_NAMES = ()
+    RETURN_TYPES = ("SCENE_VIDEO",)
+    RETURN_NAMES = ("SCENE_VIDEO",)
 
-    def run(self,video_file_path, audio_file_path):
+    def run(self,video, audio):
 
         output_dir = folder_paths.get_output_directory()
 
-        counter=get_new_counter(output_dir,'video_final_')
-        
+        # 判断是否是 Tensor 类型
+        is_tensor = not isinstance(audio, dict)
+        # print('#判断是否是 Tensor 类型',is_tensor,audio)
+        if not is_tensor and 'waveform' in audio and 'sample_rate' in audio:
+            # {'waveform': tensor([], size=(1, 1, 0)), 'sample_rate': 44100}
+            is_tensor=True
+
+        if "audio_path" in audio:
+            is_tensor=False
+            audio_file_path=audio["audio_path"]
+
+        if is_tensor:
+            filename_prefix="audio_tmp"
+            full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
+                filename_prefix, 
+                folder_paths.get_temp_directory())
+            
+            filename_with_batch_num = filename.replace("%batch_num%", str(1))
+            file = f"{filename_with_batch_num}_{counter:05}_.wav"
+            
+            audio_file_path=os.path.join(full_output_folder, file)
+
+            torchaudio.save(audio_file_path, audio['waveform'].squeeze(0), audio["sample_rate"])
+            
         # 获取文件名和扩展名
-        base, ext = os.path.splitext(video_file_path)
+        base, ext = os.path.splitext(video)
+        counter=get_new_counter(output_dir,'video_final_')
 
         v_file = f"video_final_{counter:05}{ext}"
         
         v_file_path=os.path.join(output_dir, v_file)
 
-        combine_audio_video(audio_file_path,video_file_path,v_file_path)
+        combine_audio_video(audio_file_path,video,v_file_path)
 
         previews = [
             {
@@ -588,7 +619,8 @@ class CombineAudioVideo:
                 "format": get_mime_type(v_file),
             }
         ]
-        return {"ui": {"gifs": previews}}
+
+        return {"ui": {"gifs": previews},"result":(v_file_path,)}
 
 # The code is based on ComfyUI-VideoHelperSuite modification.
 class VideoCombine_Adv:
@@ -620,8 +652,8 @@ class VideoCombine_Adv:
             },
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("video_file_path",)
+    RETURN_TYPES = ("SCENE_VIDEO",)
+    RETURN_NAMES = ("scenes_video",)
     OUTPUT_NODE = True
     CATEGORY = "♾️Mixlab/Video"
     FUNCTION = "run"
@@ -895,12 +927,12 @@ class scenesNode_:
         
         return {"required": {
                     "scenes_video": ('SCENE_VIDEO',),
-                     "index": ("INT", {"default": 0, "min": 0, "step": 1}),
+                    "index": ("INT", {"default": 0, "min": 0, "step": 1}),
                      
                      },}
 
     RETURN_TYPES = ('IMAGE','INT',)
-    RETURN_NAMES = ("frames","count",)
+    RETURN_NAMES = ("video frames (batch)","count",)
     # OUTPUT_IS_LIST = (False,)
 
     FUNCTION = "run"
@@ -908,7 +940,7 @@ class scenesNode_:
     INPUT_IS_LIST = True
 
     def load_video_cv_fallback(self, video, frame_load_cap, skip_first_frames):
-        print('#video',video)
+        # print('#video',video)
         try:
             video_cap = cv2.VideoCapture(video)
             if not video_cap.isOpened():
@@ -963,7 +995,7 @@ class scenesNode_:
         index=index[0]
         if len(scenes_video) > index:
             vp=scenes_video[index]
-
-            return self.load_video_cv_fallback(vp,0,0)
+        else:
+            vp=scenes_video[-1]
         
-        return ([], 0,)
+        return self.load_video_cv_fallback(vp,0,0)
