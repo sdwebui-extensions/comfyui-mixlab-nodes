@@ -35,8 +35,6 @@ _URL_=None
 
 
 from .nodes.RembgNode import get_rembg_models,U2NET_HOME,run_briarmbg,run_rembg
-toc = time.time()
-print(f'import .nodes.RembgNode: {toc - tic}')
 tic = time.time()
 
 from server import PromptServer
