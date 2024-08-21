@@ -34,7 +34,10 @@ function get_position_style (ctx, widget_width, y, node_height) {
   return {
     transformOrigin: '0 0',
     transform: transform,
-    left: `0`,
+    left:
+      document.querySelector('.comfy-menu').style.display === 'none'
+        ? `60px`
+        : `0`,
     top: `0`,
     cursor: 'pointer',
     position: 'absolute',
@@ -125,7 +128,7 @@ app.registerExtension({
                   window._mixlab_file_path_watcher = json.event_type
                   // widget.card.innerText = window._mixlab_file_path_watcher || ''
                   //运行
-                  // document.querySelector('#queue-button').click()
+                  if (app) app.queuePrompt()
                 }
               })
             }, 1000)

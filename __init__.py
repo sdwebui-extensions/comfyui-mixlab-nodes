@@ -33,6 +33,7 @@ _URL_=None
 # except:
 #     print("##nodes.ChatGPT ImportError")
 
+from .nodes.ChatGPT import openai_client
 
 from .nodes.RembgNode import get_rembg_models,U2NET_HOME,run_briarmbg,run_rembg
 tic = time.time()
@@ -595,17 +596,101 @@ async def mixlab_hander(request):
             print(e)
     return web.json_response(data)
 
+# llm的api key，使用硅基流动
+@routes.post('/mixlab/llm_api_key')  
+async def mixlab_llm_api_key_handler(request):  
+    data = await request.json()  
+    api_key = data.get('key')
+
+    app_folder = os.path.join(current_path, "app")
+    key_file_path = os.path.join(app_folder, "llm_api_key.txt")
+
+    if api_key:
+        if not os.path.exists(app_folder):
+            os.makedirs(app_folder)
+        try:
+            with open(key_file_path, 'w') as f:
+                f.write(api_key)
+            return web.json_response({'message': 'API key saved successfully'})
+        except Exception as e:
+            return web.json_response({'error': str(e)}, status=500)
+    else:
+        if os.path.exists(key_file_path):
+            try:
+                with open(key_file_path, 'r') as f:
+                    saved_api_key = f.read().strip()
+                return web.json_response({'key': saved_api_key})
+            except Exception as e:
+                return web.json_response({'error': str(e)}, status=500)
+        else:
+            return web.json_response({'error': 'No API key provided and no key found in local storage'}, status=400)
+
+
+@routes.post('/chat/completions')
+async def chat_completions(request):
+    data = await request.json()
+    messages = data.get('messages')
+    key=data.get('key')
+    if not messages:
+        return web.json_response({"error": "No messages provided"}, status=400)
+
+    async def generate():
+        try:
+            client=openai_client(key,"https://api.siliconflow.cn/v1")
+
+            response = client.chat.completions.create(
+                model="01-ai/Yi-1.5-9B-Chat-16K",
+                messages=messages,
+                stream=True
+            )
+
+            for chunk in response:
+                if hasattr(chunk.choices[0].delta, 'content'):
+                    content = chunk.choices[0].delta.content
+                    if content is not None:
+                        yield content.encode('utf-8') + b"\r\n"
+
+        except Exception as e:
+            yield f"Error: {str(e)}".encode('utf-8') + b"\r\n"
+
+    return web.Response(body=generate(), content_type='text/event-stream')
+
 
 @routes.get('/mixlab/app')
 async def mixlab_app_handler(request):
-    html_file = os.path.join(current_path, "web/index.html")
+    html_file = os.path.join(current_path, "webApp/index.html")
     if os.path.exists(html_file):
         with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
             html_data = f.read()
             return web.Response(text=html_data, content_type='text/html')
     else:
         return web.Response(text="HTML file not found", status=404)
+
+# web app模式独立
+@routes.get('/mixlab/app/{filename:.*}')
+async def static_file_handler(request):
+    filename = request.match_info['filename']
+    file_path = os.path.join(current_path, "webApp", filename)
+    print(file_path)
     
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        if filename.endswith('.js'):
+            content_type = 'application/javascript'
+        elif filename.endswith('.css'):
+            content_type = 'text/css'
+        elif filename.endswith('.html'):
+            content_type = 'text/html'
+        elif filename.endswith('.svg'):
+            content_type = 'image/svg+xml'
+        else:
+            content_type = 'application/octet-stream'
+        
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            file_data = f.read()
+            return web.Response(text=file_data, content_type=content_type)
+    else:
+        return web.Response(text="File not found", status=404)
+
 
 @routes.post('/mixlab/workflow')
 async def mixlab_workflow_hander(request):

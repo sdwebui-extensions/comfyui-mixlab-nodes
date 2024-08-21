@@ -1,3 +1,5 @@
+import { getUrl } from './common.js'
+
 async function* completion (url, messages, controller) {
   let data = {
     model: 'gpt-3.5-turbo-16k',
@@ -91,16 +93,81 @@ async function* completion (url, messages, controller) {
   return content
   // return (await response.json()).content
 }
-
-export async function completion_ (url, messages, controller, callback) {
-  let request = await completion(url, messages, controller)
+export async function completion_ (apiKey, url, messages, controller, callback) {
+  let request = await chatCompletion(apiKey, url, messages, controller)
   for await (const chunk of request) {
-    let content = chunk.data.choices[0].delta.content || ''
-    if (chunk.data.choices[0].role == 'assistant') {
-      //开始
-      content = ''
-    }
-
-    if (callback) callback(content)
+    if (callback) callback(chunk)
   }
+}
+
+export async function* chatCompletion (apiKey, url, messages, controller) {
+  url = `${getUrl()}/chat/completions`
+
+  const requestBody = {
+    model: '01-ai/Yi-1.5-9B-Chat-16K',
+    messages: messages,
+    stream: true,
+    key: apiKey
+  }
+
+  let response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(requestBody),
+    mode: 'cors', // This is to ensure the request is made with CORS
+    signal: controller.signal
+  })
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+
+  let content = ''
+  let leftover = '' // Buffer for partially read lines
+
+  try {
+    let cont = true
+    while (cont) {
+      let result = await reader.read()
+      if (result.done) {
+        break
+      }
+
+      // Add any leftover data to the current chunk of data
+      const text = leftover + decoder.decode(result.value)
+
+      // Check if the last character is a line break
+      const endsWithLineBreak = text.endsWith('\r\n')
+
+      // Split the text into lines
+      let lines = text.split('\r\n')
+
+      // If the text doesn't end with a line break, then the last line is incomplete
+      // Store it in leftover to be added to the next chunk of data
+      if (!endsWithLineBreak) {
+        leftover = lines.pop()
+      } else {
+        leftover = '' // Reset leftover if we have a line break at the end
+      }
+
+      for (const line of lines) {
+        if (line) {
+          content += line
+          yield line // Yield the trimmed line
+        } else {
+          cont = false
+          break
+        }
+      }
+    }
+  } catch (e) {
+    console.error('chat error: ', e)
+    throw e
+  } finally {
+    controller.abort()
+  }
+
+  return content
 }
