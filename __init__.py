@@ -1447,6 +1447,17 @@ except Exception as e:
 toc = time.time()
 print(f'import .nodes.TripoSR: {toc - tic}')
 tic = time.time()
+from .nodes.MiniCPMNode import MiniCPM_VQA_Simple
+try:
+    
+    logging.info('MiniCPMNode.available')
+    # logging.info( folder_paths.get_temp_directory())
+    NODE_CLASS_MAPPINGS['MiniCPM_VQA_Simple']=MiniCPM_VQA_Simple
+    NODE_DISPLAY_NAME_MAPPINGS["MiniCPM_VQA_Simple"]= "MiniCPM VQA Simple"
+    
+except Exception as e:
+    logging.info('MiniCPMNode.available False' )
+print(f'import .nodes.MiniCPMNode: {toc - tic}')
 
 
 logging.info('\033[93m -------------- \033[0m')
