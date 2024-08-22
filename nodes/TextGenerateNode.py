@@ -1,4 +1,4 @@
-from transformers import pipeline, set_seed,AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import set_seed,AutoTokenizer, AutoModelForSeq2SeqLM
 import random
 import re
 
@@ -13,6 +13,7 @@ import comfy.utils
 import torch
 import random
 from lark import Lark, Transformer, v_args
+pipeline = None
 
 
 global _available
@@ -303,6 +304,9 @@ class ChinesePrompt:
     zh_en_tokenizer=None 
 
     def run(self,text,seed,generation):
+        global pipeline
+        if pipeline is None:
+            from transformers import pipeline
         
 
         seed=seed[0]
@@ -407,6 +411,9 @@ class PromptGenerate:
     # 
 
     def run(self,text,multiple,seed):
+        global pipeline
+        if pipeline is None:
+            from transformers import pipeline
         global text_pipe
 
         seed=seed[0]
