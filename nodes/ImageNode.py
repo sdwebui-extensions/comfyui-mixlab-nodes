@@ -13,12 +13,25 @@ import json,io
 import comfy.utils
 from comfy.cli_args import args
 import cv2
-import string
+import string,re
 import math,glob
 from .Watcher import FolderWatcher
 
 from itertools import product
 
+
+# 文件名排序
+def sort_by_filename(items):
+    def extract_parts(filename):
+        # 使用正则表达式将文件名拆分为数字和非数字部分
+        parts = re.split(r'(\d+)', filename)
+        # 将数字部分转换为整数以便正确排序，同时保留非数字部分
+        parts = [int(part) if part.isdigit() else part for part in parts]
+        return parts
+
+    # 按照 file_name 的拆分部分进行排序
+    sorted_items = sorted(items, key=lambda x: extract_parts(x['file_name']))
+    return sorted_items
 
 # 将PIL图片转换为OpenCV格式
 def pil_to_opencv(image):
@@ -44,14 +57,13 @@ def get_files_with_extension(directory, extensions):
                 # 直接将文件名添加到列表中
                 file_list.append(file)
     return file_list
-	
 def composite_images(foreground, background, mask, is_multiply_blend=False, position="overall", scale=0.25):
     width, height = foreground.size
     bg_image = background
     bwidth, bheight = bg_image.size
 
-    scale=max(scale,1/bwidth)
-    scale=max(scale,1/bheight)
+    scale = max(scale, 1 / bwidth)
+    scale = max(scale, 1 / bheight)
 
     def determine_scale_option(width, height):
         return 'height' if height > width else 'width'
@@ -70,9 +82,9 @@ def composite_images(foreground, background, mask, is_multiply_blend=False, posi
     else:
         scale_option = determine_scale_option(width, height)
         if scale_option == 'height':
-            scale = int(bheight * scale) / height
+            scale = bheight * scale / height
         else:
-            scale = int(bwidth * scale) / width
+            scale = bwidth * scale / width
 
         new_width = int(width * scale)
         new_height = int(height * scale)
@@ -110,22 +122,13 @@ def composite_images(foreground, background, mask, is_multiply_blend=False, posi
             "mask": mask
         }
 
-    layer_image = layer['image']
-    layer_mask = layer['mask']
+    # Resize the foreground image with antialiasing
+    layer_image = layer['image'].resize((layer['width'], layer['height']), Image.ANTIALIAS)
+    layer_mask = layer['mask'].resize((layer['width'], layer['height']), Image.ANTIALIAS)
 
-    bg_image = merge_images(bg_image,
-                            layer_image,
-                            layer_mask,
-                            layer['x'],
-                            layer['y'],
-                            layer['width'],
-                            layer['height'],
-                            layer['scale_option'],
-                            is_multiply_blend)
+    bg_image.paste(layer_image, (layer['x'], layer['y']), layer_mask)
 
-    bg_image = bg_image.convert('RGB')
-
-    return bg_image
+    return bg_image.convert('RGB')
 
 
 
@@ -779,8 +782,7 @@ def areaToMask(x,y,w,h,image):
 #     return bg_image
 
 
-import cv2
-import numpy as np
+
 
 # ps的正片叠底
 # 可以基于https://www.cnblogs.com/jsxyhelu/p/16947810.html ，用gpt写python代码
@@ -960,9 +962,68 @@ def resize_image(layer_image, scale_option, width, height,color="white"):
     return layer_image
 
 
-def generate_text_image(text, font_path, font_size, text_color, vertical=True, stroke=False, stroke_color=(0, 0, 0), stroke_width=1, spacing=0, line_spacing=0,padding=4):
-    # Split text into lines based on line breaks
-    lines = text.split("\n")
+
+def generate_text_image(text, 
+                        font_path,
+                        font_size, 
+                        text_color, 
+                        vertical=True, 
+                        stroke=False, 
+                        stroke_color=(0, 0, 0), 
+                        stroke_width=1, 
+                        spacing=0, 
+                        line_spacing=0,
+                        padding=4,
+                        max_characters_per_line=48,
+                        fixed_width=None):
+    
+    def split_text(text, max_chars, fixed_width=False):
+        lines = []
+        current_line = ""
+        current_length = 0
+
+        for char in text:
+            if char == '\n':
+                lines.append(current_line)
+                current_line = ""
+                current_length = 0
+            elif '\u4e00' <= char <= '\u9fff':  # Chinese character
+                if current_length + 1 <= max_chars:
+                    current_line += char
+                    current_length += 1
+                else:
+                    lines.append(current_line)
+                    current_line = char
+                    current_length = 1
+            else:  # English character or other
+                if char == ' ':
+                    space_length = 1
+                else:
+                    space_length = 1
+                if current_length + space_length <= max_chars:
+                    current_line += char
+                    current_length += space_length
+                else:
+                    lines.append(current_line)
+                    current_line = char
+                    current_length = space_length
+
+        if current_line:
+            lines.append(current_line)
+
+        # Pad lines to max_chars if fixed_width is provided
+        if fixed_width:
+            lines = [line.ljust(max_chars) for line in lines]
+
+        # If there's only one line and fixed_width is True, pad it
+        if fixed_width and len(lines) == 1:
+            lines[0] = lines[0].ljust(max_chars)
+
+        return lines
+
+    # lines = text.split("\n")
+    # Split text into lines based on max_characters_per_line
+    lines = split_text(text, max_characters_per_line,fixed_width)
 
     # Load font
     font = ImageFont.truetype(font_path, font_size)
@@ -991,7 +1052,6 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
         max_width = x
         total_line_width = sum(font.getsize(line)[1] for line in lines)
         total_spacing = line_spacing * (len(lines) - 1)
-        # 确保左边和右边的padding都被计入max_width
         max_width = total_line_width + total_spacing + padding * 2
     else:
         for line in lines:
@@ -1003,10 +1063,8 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
                 max_width = max(max_width, x + padding)
             y += line_height + line_spacing
             x = padding
-        # max_height = y
         total_line_heights = sum(font.getsize(line)[1] for line in lines)
         total_spacing = line_spacing * (len(lines) - 1)
-        # 确保顶部和底部的padding都被计入max_height
         max_height = total_line_heights + total_spacing + padding * 2
 
     # 3. Create image with calculated width and height
@@ -1019,10 +1077,10 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
         for char in line:
             x, y = char_coordinates[index]
             if stroke:
-                draw.text((x-stroke_width, y), char, font=font, fill=text_color)
-                draw.text((x+stroke_width, y), char, font=font, fill=text_color)
-                draw.text((x, y-stroke_width), char, font=font, fill=text_color)
-                draw.text((x, y+stroke_width), char, font=font, fill=text_color)
+                draw.text((x-stroke_width, y), char, font=font, fill=stroke_color)
+                draw.text((x+stroke_width, y), char, font=font, fill=stroke_color)
+                draw.text((x, y-stroke_width), char, font=font, fill=stroke_color)
+                draw.text((x, y+stroke_width), char, font=font, fill=stroke_color)
             
             draw.text((x, y), char, font=font, fill=text_color)
             index += 1
@@ -1036,7 +1094,15 @@ def generate_text_image(text, font_path, font_size, text_color, vertical=True, s
 
     image = image.convert('RGB')
 
+    # 5. Scale the image if fixed_width is specified
+    if fixed_width and fixed_width < max_width:
+        scaling_factor = fixed_width / max_width
+        new_height = int(max_height * scaling_factor)
+        image = image.resize((fixed_width, new_height), Image.ANTIALIAS)
+        alpha_image = alpha_image.resize((fixed_width, new_height), Image.ANTIALIAS)
+
     return (image, alpha_image)
+
 
 
 
@@ -1380,7 +1446,7 @@ class LoadImagesFromPath:
                             },
                 "optional":{
                     "white_bg": (["disable","enable"],),
-                    "newest_files": (["enable", "disable"],),
+                    "sort_by": (["file_name", "newest"],),#根据文件名来排序，还是按照最新创建时间
                     "index_variable":("INT", {
                         "default": 0, 
                         "min": -1, #Minimum value
@@ -1390,13 +1456,13 @@ class LoadImagesFromPath:
                     }),
                     "watcher":(["disable","enable"],),
                     "result": ("WATCHER",),#为了激活本节点运行
-                     "prompt": ("PROMPT",),
-                    # "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "prompt": ("PROMPT",),
+                    "seed": (any_type,  {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 }
             }
     
     RETURN_TYPES = ('IMAGE','MASK','STRING','STRING',)
-    RETURN_NAMES = ("IMAGE","MASK","prompt_for_FloatingVideo","filepaths",)
+    RETURN_NAMES = ("image list","MASK","prompt_for_FloatingVideo","filepaths",)
 
     FUNCTION = "run"
 
@@ -1409,7 +1475,7 @@ class LoadImagesFromPath:
     watcher_folder=None
 
     # 运行的函数
-    def run(self,file_path,white_bg,newest_files,index_variable,watcher,result,prompt):
+    def run(self,file_path,white_bg,sort_by,index_variable,watcher,result,prompt,seed=1):
         global watcher_folder
         # print('###监听:',watcher_folder,watcher,file_path,result)
 
@@ -1432,19 +1498,23 @@ class LoadImagesFromPath:
         # 当开启了监听，则取最新的，第一个文件
         if watcher=='enable':
             index_variable=0
-            newest_files='enable'
+            sort_by='newest'
 
         # 排序
-        sorted_files = sorted(images, key=lambda x: os.path.getmtime(x['file_path']), reverse=(newest_files=='enable'))
+        if sort_by=='newest':
+            sorted_files = sorted(images, key=lambda x: os.path.getmtime(x['file_path']), reverse=True)
+        elif sort_by=='file_name':
+            # 根据文件名排序
+            sorted_files = sort_by_filename(images)
 
         imgs=[]
         masks=[]
-        file_names=[]
+        file_paths=[]
 
         for im in sorted_files:
             imgs.append(im['image'])
             masks.append(im['mask'])
-            file_names.append(im['file_name'])
+            file_paths.append(im['file_path'])
         
         # print('index_variable',index_variable)
         
@@ -1452,12 +1522,13 @@ class LoadImagesFromPath:
             if index_variable!=-1:
                 imgs=[imgs[index_variable]] if index_variable < len(imgs) else None
                 masks=[masks[index_variable]] if index_variable < len(masks) else None
-                file_names=[file_names[index_variable]] if index_variable < len(file_names) else None
+                file_paths=[file_paths[index_variable]] if index_variable < len(file_paths) else None
         except Exception as e:
             print("发生了一个未知的错误：", str(e))
 
         # print('#prompt::::',prompt)
-        return  {"ui": {"seed": [1]}, "result":(imgs,masks,prompt,file_names,)}
+        # return  {"ui": {"seed": [1]}, "result":(imgs,masks,prompt,file_names,)}
+        return  (imgs,masks,prompt,file_paths,)
 
 
 # TODO 扩大选区的功能,重新输出mask
@@ -1592,6 +1663,20 @@ class TextImage:
                     "text_color":("STRING",{"multiline": False,"default": "#000000","dynamicPrompts": False}),
                     "vertical":("BOOLEAN", {"default": True},),
                     "stroke":("BOOLEAN", {"default": False},),
+                    "max_characters_per_line": ("INT",{
+                                "default":44, 
+                                "min": 1, #Minimum value
+                                "max": 2000000000, #Maximum value
+                                "step": 1, #Slider's step
+                                "display": "number" # Cosmetic only: display as "number" or "slider"
+                                }),
+                    "fixed_width":("INT",{
+                                "default":0, 
+                                "min": 0, #Minimum value
+                                "max": 2000000000, #Maximum value
+                                "step": 1, #Slider's step
+                                "display": "number" # Cosmetic only: display as "number" or "slider"
+                                }),
                              },
                 }
     
@@ -1605,14 +1690,20 @@ class TextImage:
     INPUT_IS_LIST = False
     OUTPUT_IS_LIST = (False,False,)
 
-    def run(self,text,font,font_size,spacing,line_spacing,padding,text_color,vertical,stroke):
+    def run(self,text,font,font_size,spacing,line_spacing,padding,text_color,vertical,stroke,max_characters_per_line,fixed_width):
         
         font_path=os.path.join(FONT_PATH,font)
 
         if text=="":
             text=" "
         # stroke=False, stroke_color=(0, 0, 0), stroke_width=1, spacing=0
-        img,mask=generate_text_image(text,font_path,font_size,text_color,vertical,stroke,(0, 0, 0),1,spacing,line_spacing,padding)
+        # max_characters_per_line 英文字按照空格计算1个，中文按照字数计算
+        if fixed_width==0:
+            fixed_width=None
+        img,mask=generate_text_image(text,font_path,font_size,text_color,vertical,stroke,(0, 0, 0),1,
+                                     spacing,line_spacing,padding,max_characters_per_line,
+                                     fixed_width
+                                     )
         
         img=pil2tensor(img)
         mask=pil2tensor(mask)
@@ -2799,14 +2890,14 @@ class ResizeImage:
                     "default": 512, 
                     "min": 1, #Minimum value
                     "max": 8192, #Maximum value
-                    "step": 8, #Slider's step
+                    "step": 1, #Slider's step
                     "display": "number" # Cosmetic only: display as "number" or "slider"
                 }),
                 "height": ("INT",{
                     "default": 512, 
                     "min": 1, #Minimum value
                     "max": 8192, #Maximum value
-                    "step": 8, #Slider's step
+                    "step": 1, #Slider's step
                     "display": "number" # Cosmetic only: display as "number" or "slider"
                 }),
                 "scale_option": (["width","height",'overall','center'],),
@@ -2822,7 +2913,7 @@ class ResizeImage:
                 }
     
     RETURN_TYPES = ("IMAGE","IMAGE","STRING","MASK",)
-    RETURN_NAMES = ("image","average_image","average_hex","mask",)
+    RETURN_NAMES = ("image list","average_image","average_hex","mask",)
 
     FUNCTION = "run"
 
@@ -3301,7 +3392,6 @@ class DepthViewer_:
             "required": {
                 "image": ("IMAGE",),
                 "depth_map": ("IMAGE",),
-
             },
              "optional":{
                   "frames":("IMAGEBASE64",), 
@@ -3315,7 +3405,6 @@ class DepthViewer_:
         self.full_output_folder,self.filename,self.counter, self.subfolder, self.filename_prefix = folder_paths.get_save_image_path(
             "imagesave", 
             folder_paths.get_output_directory())
-
 
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("frames",)
@@ -3366,14 +3455,20 @@ class DepthViewer_:
         image1 = Image.new('RGB', (512, 512), color='black')
         image1=pil2tensor(image1)
 
-        if frames!=None:
+        # print('frames',frames)
+        if frames!=None and "images" in frames:
+            
             for im in frames['images']:
                 # print(im)
                 if 'type' in im and (not f"[{im['type']}]" in im['name']):
                     im['name']=im['name']+" "+f"[{im['type']}]"
-                    
-                output_image, output_mask = load_image_to_tensor(im['name'])
-                ims.append(output_image)
+                
+                try:
+                    output_image, output_mask = load_image_to_tensor(im['name'])
+                    ims.append(output_image)
+                except:
+                    print("no")
+                
 
             if len(ims)>0:
                 image1 = ims[0]

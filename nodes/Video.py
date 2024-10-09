@@ -22,7 +22,15 @@ import base64
 
 import mimetypes
 
-
+# 使用递归的方法将嵌套的列表展平为一维列表
+def flatten_list(nested_list):
+    flat_list = []
+    for item in nested_list:
+        if isinstance(item, list):
+            flat_list.extend(flatten_list(item))
+        else:
+            flat_list.append(item)
+    return flat_list
 
 def get_frames(frame_count, frames, revert=False):
     if not revert:
@@ -913,7 +921,7 @@ class GenerateFramesByCount:
     def r(self, frames, frame_count, revert):
         
         image_list = [frames[i:i + 1, ...] for i in range(frames.shape[0])]
-
+        print('#image_list',len(image_list),frame_count)
         image_list=get_frames(frame_count,image_list,revert)
 
         images = torch.cat(image_list, dim=0)
@@ -928,7 +936,6 @@ class scenesNode_:
         return {"required": {
                     "scenes_video": ('SCENE_VIDEO',),
                     "index": ("INT", {"default": 0, "min": 0, "step": 1}),
-                     
                      },}
 
     RETURN_TYPES = ('IMAGE','INT',)
@@ -940,14 +947,15 @@ class scenesNode_:
     INPUT_IS_LIST = True
 
     def load_video_cv_fallback(self, video, frame_load_cap, skip_first_frames):
-        # print('#video',video)
+        
+        images = []
+        total_frame_count = 0
+        video_cap = cv2.VideoCapture(video)
         try:
-            video_cap = cv2.VideoCapture(video)
             if not video_cap.isOpened():
                 raise ValueError(f"{video} could not be loaded with cv fallback.")
             # set video_cap to look at start_index frame
-            images = []
-            total_frame_count = 0
+            
             frames_added = 0
             base_frame_time = 1/video_cap.get(cv2.CAP_PROP_FPS)
             
@@ -986,11 +994,13 @@ class scenesNode_:
         finally:
             video_cap.release()
         
+        print("total_frame_count",total_frame_count)
         images = torch.cat(images, dim=0)
        
         return (images, frames_added,)
 
     def run(self, scenes_video,index):
+        scenes_video=flatten_list(scenes_video)
         print('#scenes_video',index,scenes_video)
         index=index[0]
         if len(scenes_video) > index:

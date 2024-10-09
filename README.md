@@ -6,7 +6,19 @@
 商务合作请联系 389570357@qq.com
 For business cooperation, please contact email 389570357@qq.com
 
+![Her 的DEMO页面](assets/1725710761451.png)
+
 ##### `最新`：
+
+- 新增 SenseVoice
+
+- [新增JS-SDK，方便直接在前端项目中使用comfyui](https://github.com/shadowcz007/comfyui-js-sdk)
+
+- 新增API调用图像生成节点 TextToImage Siliconflow，可以直接调用Siliconflow提供的flux生成图像
+
+- [增加 Her 的DEMO页面，和数字人对话](https://github.com/shadowcz007/ComfyUI-Backend-MixlabNodes/blob/main/workflow/her_demo_workflow.json)
+
+- 右键菜单支持 text-to-text，方便对 prompt 词补全，支持云LLM或者是本地LLM。
 
 - 增加 MiniCPM-V 2.6 int4
 
@@ -29,7 +41,6 @@ Running with int4 version would use lower GPU memory (about 7GB).
 
 <!-- - ChatGPT 节点支持 Local LLM（llama.cpp），Phi3、llama3 都可以直接一个节点运行了。模型下载后，放置到 `models/llamafile/` -->
 
-<!-- - 右键菜单支持 text-to-text，方便对 prompt 词补全 -->
 <!--
 强烈推荐：
 [Phi-3-mini-4k-instruct-function-calling-GGUF](https://huggingface.co/nold/Phi-3-mini-4k-instruct-function-calling-GGUF)
@@ -291,16 +302,30 @@ from [simple-lama-inpainting](https://github.com/enesmsahin/simple-lama-inpainti
 
 **_ briarmbg _** model was developed by BRlA Al and can be used as an open-source model for non-commercial purposes
 
-### Improvement
+### Enhancement
 
-- Add "help" option to the context menu for each node.
-- Add "Nodes Map" option to the global context menu.
+- Direct "Help" option accessible through node context menu.
 
-An improvement has been made to directly redirect to GitHub to search for missing nodes when loading the graph.
+- "Nodes Map" feature added to global context menu.
+
+- An improvement has been made to directly redirect to GitHub to search for missing nodes when loading the graph.
+
+*** If not needed, you can comment out ```app.showMissingNodesError``` in the ```ui_mixlab.js``` file.
 
 ![help](./assets/help.png)
 
 ![node-not-found](./assets/node-not-found.png)
+
+
+- Right-click shortcut
+
+右键菜单支持 text-to-text，方便对 prompt 词补全，支持云LLM或者是本地LLM。
+The right-click menu supports text-to-text conversion, facilitating prompt word completion, and supports cloud LLMs or local LLMs.
+
+Local LLM API example:```http://localhost:1234/v1```
+
+![alt text](./assets/1724380841822.png)
+
 
 ### Models
 

@@ -7,8 +7,18 @@ import hashlib
 import codecs,sys
 import importlib.util
 import subprocess
+import requests
+from PIL import Image
+from io import BytesIO
+import torch
+import numpy as np
 
 python = sys.executable
+
+# Convert PIL to Tensor
+def pil2tensor(image):
+    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+
 
 # 从文本中提取json
 def extract_json_strings(text):
@@ -204,7 +214,7 @@ if is_installed('json_repair'):
     from json_repair import repair_json
 
 
-def chat(client, model_name,messages ):
+def chat(client, model_name,messages,max_tokens=4096,temperature=0.6 ):
         print('#chat',model_name,messages)
         try_count = 0
         while True:
@@ -213,7 +223,9 @@ def chat(client, model_name,messages ):
                 if hasattr(client, "chat"):
                     response = client.chat.completions.create(
                         model=model_name,
-                        messages=messages
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature
                     )
                 else:
                     # 是llama的
@@ -448,7 +460,8 @@ class SiliconflowFreeNode:
     @classmethod
     def INPUT_TYPES(cls):
         model_list= [ 
-            "Qwen/Qwen2-7B-Instruct",
+            "Qwen/Qwen2.5-7B-Instruct",
+            "Qwen/Qwen2-7B-Instruct", 
             "THUDM/glm-4-9b-chat",
             "01-ai/Yi-1.5-9B-Chat-16K",
             "meta-llama/Meta-Llama-3.1-8B-Instruct"
@@ -466,10 +479,11 @@ class SiliconflowFreeNode:
                     {"default": model_list[0]}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "step": 1}),
                 "context_size":("INT", {"default": 1, "min": 0, "max":30, "step": 1}),
+                "max_tokens":("INT", {"default": 512, "min": 512, "max":200000, "step": 1}),
             },
                "optional":{
                     "custom_model_name":("STRING", {"forceInput": True,}), #适合自定义model
-                }, 
+                },
         }
 
     RETURN_TYPES = ("STRING","STRING","STRING",)
@@ -481,11 +495,14 @@ class SiliconflowFreeNode:
 
     
     def generate_contextual_text(self,
-                                 api_key,
-                                 prompt, 
-                                 system_content,
+                                api_key,
+                                prompt, 
+                                system_content,
                                 model, 
-                                seed,context_size,custom_model_name=None):
+                                seed,
+                                context_size,
+                                max_tokens,
+                                custom_model_name=None):
 
         if custom_model_name!=None:
             model=custom_model_name
@@ -517,12 +534,88 @@ class SiliconflowFreeNode:
 
         messages=[{"role": "system", "content": self.system_content}]+session_history+[{"role": "user", "content": prompt}]
 
-        response_content = chat(client,model,messages)
+        response_content = chat(client,model,messages,max_tokens)
         
         self.session_history=self.session_history+[{"role": "user", "content": prompt}]+[{'role':'assistant',"content":response_content}]
 
         return (response_content,json.dumps(messages, indent=4),json.dumps(self.session_history, indent=4),)
 
+
+
+class SiliconflowTextToImageNode:
+   
+    @classmethod
+    def INPUT_TYPES(cls):
+        model_list= [ 
+            "black-forest-labs/FLUX.1-schnell", 
+            ]
+        return {
+            "required": {
+                "api_key":("STRING", {"forceInput": True,}),
+                "prompt": ("STRING", {"multiline": True,"dynamicPrompts": False}), 
+                "width": ("INT", {"default": 512, "min": 512, "max": 4096, "step": 8}), 
+                "height": ("INT", {"default": 512, "min": 512, "max": 4096, "step": 8}), 
+                "model": ( model_list, 
+                    {"default": model_list[0]}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "step": 1}), 
+            },
+               "optional":{
+                    "custom_model_name":("STRING", {"forceInput": True,}), #适合自定义model
+                },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate_contextual_text"
+    CATEGORY = "♾️Mixlab/Image"
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (False,)
+
+    
+    def generate_contextual_text(self,
+                                api_key,
+                                prompt, 
+                                width,
+                                height,
+                                model, 
+                                seed,
+                                custom_model_name=None):
+
+        if custom_model_name!=None:
+            model=custom_model_name
+
+        url=f"https://api.siliconflow.cn/v1/{model}/text-to-image"
+
+        headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+        }
+        post_data = {
+            "prompt":prompt,
+            "image_size": f'{width}x{height}',
+        }
+
+        empty_img= pil2tensor(Image.new('RGB', (1, 1), color='white'))
+        
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(post_data))
+            response_data = response.json()
+
+            if response_data.get('code') == 20021:
+                return  (empty_img,)
+
+            image_url = response_data['images'][0]['url']
+             
+            # Fetch the image using the image URL and read it with PIL
+            image_response = requests.get(image_url)
+            image = Image.open(BytesIO(image_response.content))
+
+            image=pil2tensor(image)
+            return (image,)
+        except Exception as error:
+            print(error)
+            return (empty_img,)
 
 
 

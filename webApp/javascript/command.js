@@ -389,14 +389,30 @@ function base64ToBlob (base64) {
   return blob
 }
 
+function generateRandomString (length = 16) {
+  const array = new Uint8Array(length)
+  window.crypto.getRandomValues(array)
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+}
+// window.crypto.subtle 在https协议下才能访问
 async function calculateImageHash (blob) {
-  const buffer = await blob.arrayBuffer()
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('')
-  return hashHex
+  if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+    try {
+      const buffer = await blob.arrayBuffer()
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      const hashHex = hashArray
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('')
+      return hashHex
+    } catch (error) {
+      console.error('Error computing hash with Web Crypto API:', error)
+      return generateRandomString()
+    }
+  } else {
+    console.error('Web Crypto API is not supported in this browser.')
+    return generateRandomString()
+  }
 }
 
 // 获取 rembg 模型
@@ -661,6 +677,47 @@ const _textNodes = [
   _colorNodes = ['Color'],
   _audioNodes = ['LoadAndCombinedAudio_']
 
+async function createVideoFromBase64Images (base64Images, frameRate = 24) {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  // Load the first image to set the canvas dimensions
+  const firstImage = new Image()
+  firstImage.src = base64Images[0]
+  await new Promise(resolve => (firstImage.onload = resolve))
+
+  canvas.width = firstImage.width
+  canvas.height = firstImage.height
+
+  const stream = canvas.captureStream(frameRate)
+  const recorder = new MediaRecorder(stream)
+  const chunks = []
+
+  recorder.ondataavailable = event => {
+    if (event.data.size > 0) {
+      chunks.push(event.data)
+    }
+  }
+
+  recorder.start()
+
+  for (const base64Image of base64Images) {
+    const img = new Image()
+    img.src = base64Image
+    await new Promise(resolve => (img.onload = resolve))
+
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    await new Promise(resolve => setTimeout(resolve, 1000 / frameRate))
+  }
+
+  recorder.stop()
+
+  await new Promise(resolve => (recorder.onstop = resolve))
+
+  const videoBlob = new Blob(chunks, { type: 'video/webm' })
+  return URL.createObjectURL(videoBlob)
+}
+
 export default {
   get_url,
   get_my_app,
@@ -693,5 +750,7 @@ export default {
   _slideNodes,
   _imageNodes,
   _colorNodes,
-  _audioNodes
+  _audioNodes,
+
+  createVideoFromBase64Images //把图片的base64转为video src使用
 }
