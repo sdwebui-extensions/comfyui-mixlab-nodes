@@ -33,7 +33,7 @@ _URL_=None
 # except:
 #     print("##nodes.ChatGPT ImportError")
 
-from .nodes.ChatGPT import openai_client
+# from .nodes.ChatGPT import openai_client
 
 from .nodes.RembgNode import get_rembg_models,U2NET_HOME,run_briarmbg,run_rembg
 tic = time.time()
@@ -1020,7 +1020,7 @@ toc = time.time()
 print(f'import .nodes.ScreenShareNode: {toc - tic}')
 tic = time.time()
 
-from .nodes.Audio import AudioPlayNode,SpeechRecognition,SpeechSynthesis
+from .nodes.Audio import AudioPlayNode,SpeechRecognition,SpeechSynthesis,AnalyzeAudioNone
 from .nodes.Utils import CreateJsonNode,KeyInput,IncrementingListNode,ListSplit,CreateLoraNames,CreateSampler_names,CreateCkptNames,CreateSeedNode,TESTNODE_,TESTNODE_TOKEN,AppInfo,IntNumber,FloatSlider,TextInput,ColorInput,FontInput,TextToNumber,DynamicDelayProcessor,LimitNumber,SwitchByIndex,MultiplicationNode
 from .nodes.Mask import PreviewMask_,MaskListReplace,MaskListMerge,OutlineMask,FeatheredMask
 toc = time.time()
@@ -1123,6 +1123,7 @@ NODE_CLASS_MAPPINGS = {
     "SpeechRecognition":SpeechRecognition,
     "SpeechSynthesis":SpeechSynthesis,
     "AudioPlay":AudioPlayNode,
+    "AnalyzeAudio":AnalyzeAudioNone,
 
     # Text
     "TextToNumber":TextToNumber,
@@ -1240,6 +1241,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SpeechSynthesis":"SpeechSynthesis ♾️Mixlab",
     "SpeechRecognition":"SpeechRecognition ♾️Mixlab",
     "AudioPlay":"Preview Audio ♾️Mixlab",
+    "AnalyzeAudio":"Analyze Audio ♾️Mixlab",
 
     # Utils
     "DynamicDelayProcessor":"DynamicDelayByText ♾️Mixlab",
@@ -1279,7 +1281,7 @@ logging.info('\033[91m ### Mixlab Nodes: \033[93mLoaded')
 # print('\033[91m ### Mixlab Nodes: \033[93mLoaded')
 
 try:
-    from .nodes.ChatGPT import SiliconflowTextToImageNode,JsonRepair,ChatGPTNode,ShowTextForGPT,CharacterInText,TextSplitByDelimiter,SiliconflowFreeNode
+    from .nodes.ChatGPT import SimulateDevDesignDiscussions,SiliconflowTextToImageNode,JsonRepair,ChatGPTNode,ShowTextForGPT,CharacterInText,TextSplitByDelimiter,SiliconflowFreeNode
     logging.info('ChatGPT.available True')
 
     NODE_CLASS_MAPPINGS_V = {
@@ -1289,7 +1291,9 @@ try:
         "ShowTextForGPT":ShowTextForGPT,
         "CharacterInText":CharacterInText,
         "TextSplitByDelimiter":TextSplitByDelimiter,
-        "JsonRepair":JsonRepair
+        "JsonRepair":JsonRepair,
+
+        "SimulateDevDesignDiscussions":SimulateDevDesignDiscussions
     }
 
     # 一个包含节点友好/可读的标题的字典
@@ -1300,7 +1304,9 @@ try:
         "ShowTextForGPT":"Show Text ♾️MixlabApp",
         "CharacterInText":"Character In Text",
         "TextSplitByDelimiter":"Text Split By Delimiter",
-        "JsonRepair":"Json Repair"
+        "JsonRepair":"Json Repair",
+
+        "SimulateDevDesignDiscussions":"SimulateDevDesignDiscussions ♾️Mixlab Podcast"
     }
 
 
@@ -1481,11 +1487,39 @@ try:
     from .nodes.SenseVoice import SenseVoiceNode
     logging.info('SenseVoice.available')
     NODE_CLASS_MAPPINGS['SenseVoiceNode']=SenseVoiceNode
-    NODE_DISPLAY_NAME_MAPPINGS["SenseVoiceNode"]= "Sense Voice"
+    NODE_DISPLAY_NAME_MAPPINGS["SenseVoiceNode"]= "Sense Voice ♾️Mixlab"
 
 except Exception as e:
     logging.info('SenseVoice.available False' )  
 
+try:
+    from .nodes.Whisper import LoadWhisperModel,WhisperTranscribe
+    logging.info('Whisper.available')
+    NODE_CLASS_MAPPINGS['LoadWhisperModel_']=LoadWhisperModel
+    NODE_CLASS_MAPPINGS['WhisperTranscribe_']=WhisperTranscribe
+    NODE_DISPLAY_NAME_MAPPINGS["LoadWhisperModel_"]= "Load Whisper Model ♾️Mixlab"
+    NODE_DISPLAY_NAME_MAPPINGS["WhisperTranscribe_"]= "Whisper Transcribe ♾️Mixlab"
 
+except Exception as e:
+    logging.info('Whisper.available False' )  
+
+
+try:
+    from .nodes.FalVideo import VideoGenKlingNode,VideoGenLumaDreamMachineNode,VideoGenRunwayGen3Node,LoadVideoFromURL
+    logging.info('FalVideo.available')
+    # Update Node class mappings
+    NODE_CLASS_MAPPINGS['VideoGenKlingNode']=VideoGenKlingNode
+    NODE_CLASS_MAPPINGS['VideoGenRunwayGen3Node']=VideoGenRunwayGen3Node
+    NODE_CLASS_MAPPINGS['VideoGenLumaDreamMachineNode']=VideoGenLumaDreamMachineNode
+    NODE_CLASS_MAPPINGS['LoadVideoFromURL']=LoadVideoFromURL
+    
+    NODE_DISPLAY_NAME_MAPPINGS["VideoGenKlingNode"]=  "Kling Video Generation @fal"
+    NODE_DISPLAY_NAME_MAPPINGS["VideoGenRunwayGen3Node"]= "Runway Gen3 Image-to-Video @fal"
+    NODE_DISPLAY_NAME_MAPPINGS["VideoGenLumaDreamMachineNode"]= "Luma Dream Machine @fal"
+    NODE_DISPLAY_NAME_MAPPINGS["LoadVideoFromURL"]= "Load Video from URL"
+    
+
+except Exception as e:
+    logging.info('FalVideo.available False' )  
 
 logging.info('\033[93m -------------- \033[0m')
