@@ -29,13 +29,19 @@ prompt_generator=get_text_generator_path()
 
 text_generator_model_path=os.path.join(prompt_generator, "text2image-prompt-generator")
 if not os.path.exists(text_generator_model_path):
-    print(f"## text_generator_model not found: {text_generator_model_path}, pls download from https://huggingface.co/succinctly/text2image-prompt-generator/tree/main")
-    text_generator_model_path='succinctly/text2image-prompt-generator'
+    if os.path.exists('/stable-diffusion-cache/models/prompt_generator/text2image-prompt-generator'):
+        text_generator_model_path = '/stable-diffusion-cache/models/prompt_generator/text2image-prompt-generator'
+    else:
+        print(f"## text_generator_model not found: {text_generator_model_path}, pls download from https://huggingface.co/succinctly/text2image-prompt-generator/tree/main")
+        text_generator_model_path='succinctly/text2image-prompt-generator'
 
 zh_en_model_path=os.path.join(prompt_generator, "opus-mt-zh-en")
 if not os.path.exists(zh_en_model_path):
-    print(f"## zh_en_model not found: {zh_en_model_path}, pls download from https://huggingface.co/Helsinki-NLP/opus-mt-zh-en/tree/main")
-    zh_en_model_path='Helsinki-NLP/opus-mt-zh-en'
+    if os.path.exists('/stable-diffusion-cache/models/prompt_generator/opus-mt-zh-en'):
+        zh_en_model_path = '/stable-diffusion-cache/models/prompt_generator/opus-mt-zh-en'
+    else:
+        print(f"## zh_en_model not found: {zh_en_model_path}, pls download from https://huggingface.co/Helsinki-NLP/opus-mt-zh-en/tree/main")
+        zh_en_model_path='Helsinki-NLP/opus-mt-zh-en'
 
 
 def is_installed(package):
