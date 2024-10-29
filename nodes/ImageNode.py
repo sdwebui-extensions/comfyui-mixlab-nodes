@@ -2951,11 +2951,14 @@ class ResizeImage:
                     im=tensor2pil(im)
 
                     im=im.convert('RGB')
-                    a_im,hex=get_average_color_image(im)
 
+                    a_im,hex=get_average_color_image(im)
+                    
                     if average_color=='on':
                         fill_color=hex
-                        
+
+                    a_im=resize_image(a_im,scale_option,w,h,fill_color)
+
                     im=resize_image(im,scale_option,w,h,fill_color)
 
                     im=pil2tensor(im)
