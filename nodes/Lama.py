@@ -49,6 +49,8 @@ def get_lama_path():
         return os.path.join(folder_paths.models_dir, "lama")
 
 llma_model_path=os.path.join(get_lama_path(), "big-lama.pt")
+if os.path.exists('/stable-diffusion-cache/models/inpaint/big-lama.pt'):
+    llma_model_path = '/stable-diffusion-cache/models/inpaint/big-lama.pt/big-lama.pt'
 if not os.path.exists(llma_model_path):
     os.environ['LAMA_MODEL']=''
     print(f"## lama torchscript model not found: {llma_model_path},pls download from https://github.com/enesmsahin/simple-lama-inpainting/releases/download/v0.1.0/big-lama.pt")
