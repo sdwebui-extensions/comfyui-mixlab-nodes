@@ -2168,33 +2168,6 @@ app.registerExtension({
         }
       }
     }
-
-    fetch('manager/badge_mode').then(r => {
-      if (r.status === 404) {
-        // 已有ComfyUI自带的badge
-        if(node.badges?.[0]?.()){
-          return
-        }
-        // 右上角的badge是否已经绘制
-        if (!node.badge_enabled) {
-          if (!node.getNickname) {
-            node.getNickname = function () {
-              if (node.nickname) {
-                return node.nickname
-              }
-              return
-              // return getNickname(node, node.comfyClass.trim())
-            }
-          }
-
-          const orig = node.__proto__.onDrawForeground
-          node.onDrawForeground = function (ctx) {
-            drawBadge(node, orig, arguments)
-          }
-          node.badge_enabled = true
-        }
-      }
-    })
   },
   async loadedGraphNode (node, app) {
     // console.log(
